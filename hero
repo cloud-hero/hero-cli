@@ -1,0 +1,408 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import os
+import sys
+
+import click
+from pyhero import Client
+
+VERBOSE = False
+CLI_VERSION = '1.0'
+
+CLOUD_HERO_TOKEN_ENV_VARIABLE = 'CLOUD_HERO_TOKEN'
+CLOUD_HERO_SETTINGS_PATH = '~/.herorc'
+
+
+def persist_token(user_token):
+    """
+    Set token environment variable.
+    """
+    os.environ['CLOUD_HERO_TOKEN'] = user_token
+    write(user_token)
+
+
+def forget_token():
+    """
+    Unset token environment variable.
+    """
+    env_token = os.environ.get('CLOUD_HERO_TOKEN', None)
+    del env_token
+    delete_token()
+
+
+def write(content):
+    """
+    Write token to config file.
+    """
+    config_file_path = os.path.expanduser(CLOUD_HERO_SETTINGS_PATH)
+    with open(config_file_path, "w") as file_handler:
+        file_handler.write(content)
+
+
+def read_token():
+    """
+    Read CloudHero config file.
+    """
+    config_file_path = os.path.expanduser(CLOUD_HERO_SETTINGS_PATH)
+    if not os.path.isfile(config_file_path):
+        return None
+
+    with open(config_file_path, "r") as file_handler:
+        token_from_file = file_handler.read()
+        return token_from_file.strip().replace('\n', '').replace('\t', '')
+
+
+def delete_token():
+    """
+    Remove token.
+    """
+    config_file_path = os.path.expanduser(CLOUD_HERO_SETTINGS_PATH)
+    try:
+        os.remove(config_file_path)
+    except OSError:
+        print('You are already logged out!')
+
+
+token = os.environ.get(CLOUD_HERO_TOKEN_ENV_VARIABLE)
+if not token:
+    token = read_token()
+cloud_hero = Client(token=token)
+
+
+def verify_one_of(kwargs, *args):
+    args_for_printing = '/'.join(['--{}'.format(arg) for arg in args])
+    arguments_value_list = [kwargs[arg] for arg in args]
+    if not any(arguments_value_list):
+        sys.exit('At least one of {} is required'.format(args_for_printing))
+
+    arguments_provided = [arg for arg in arguments_value_list if arg]
+    if len(arguments_provided) > 1:
+        sys.exit('Provide just one of {}'.format(args_for_printing))
+
+
+def clean_un_provided_arguments(kwargs):
+    for key, value in kwargs.items():
+        if value is None:
+            kwargs.pop(key)
+
+
+def tags_for_pprint(tags):
+    if not tags:
+        return '-'
+    return ', '.join(['{}:{}'.format(key, value)
+                      for key, value in tags.items()])
+
+
+def tags_to_dict(tags):
+    dict_tags = {}
+    for tag in tags.split(','):
+        tag = tag.strip()
+        key, value = tag.split(':')
+        dict_tags[key] = value
+    return dict_tags
+
+
+@click.group()
+@click.version_option(version=CLI_VERSION, help='Show the version')
+@click.help_option('-h', '--help', help='Show usage')
+@click.help_option('-v', '--verbose', help='Enable verbose mode')
+def hero(**kwargs):
+    if kwargs.get('verbose'):
+        global VERBOSE
+        VERBOSE = True
+
+
+@hero.command('token', help='See your token')
+def show_token():
+    print token
+
+
+@hero.group(help='Nodes operations')
+def nodes():
+    pass
+
+
+@nodes.command('add', help='Add node')
+@click.option('-e', '--environment', required=True, help='Environment ID')
+@click.option('-p', '--packages', help='Packages to be installed on the node')
+@click.option('-t', '--tags', help='Tags to be applied on the node')
+@click.option('-s', '--size', required=True, help='Node size')
+@click.argument('name')
+def add_node(**node_kwargs):
+    environment_id = node_kwargs.pop('environment')
+    if node_kwargs.get('packages'):
+        node_kwargs['packages'] = node_kwargs['packages'].split(',')
+    if node_kwargs.get('tags'):
+        node_kwargs['tags'] = tags_to_dict(node_kwargs['tags'])
+    cloud_hero.add_node(environment_id, [node_kwargs])
+
+
+@nodes.command('scale', help='Scale based node')
+@click.option('-e', '--environment', required=True, help='Environment UUID')
+@click.option('--uuid', help='Scale based on an existing node ID')
+@click.option('--tags', help='Scale based on an existing node tags')
+@click.option('--up', help='Scale UP')
+@click.option('--down', help='Scale DOWN')
+def scale_node(**kwargs):
+    verify_one_of(kwargs, 'uuid', 'tags')
+    verify_one_of(kwargs, 'up', 'down')
+    kwargs['node'] = kwargs.pop('uuid')
+    clean_un_provided_arguments(kwargs)
+    if kwargs.get('node') and kwargs.get('down'):
+        print('Note that scaling down by UUID will only remove the selected '
+              'node!')
+    if kwargs.get('tags'):
+        kwargs['tags'] = tags_to_dict(kwargs['tags'])
+
+    environment_id = kwargs.pop('environment')
+    if kwargs.get('up'):
+        kwargs['count'] = int(kwargs.pop('up'))
+        cloud_hero.scale_up_node(environment_id, kwargs)
+    else:
+        kwargs['count'] = int(kwargs.pop('down'))
+        cloud_hero.scale_down_node(environment_id, kwargs)
+
+
+@nodes.command('ls', help='List all your nodes')
+def list_nodes():
+    node_format = ('{node_id:<25}{node_name:<20}'
+                   '{environment_id:<25}{environment_name:<20}'
+                   '{status:<10}{provider:<10}{public_ip:<17}{private_ip:<17}'
+                   '{packages:<15}{tags:<15}')
+    print node_format.format(
+        node_id='NODE-ID', node_name='NAME',
+        environment_id='ENVIRONMENT-ID', environment_name='ENVIRONMENT-NAME',
+        public_ip='PUBLIC-IP', private_ip='PRIVATE-IP',
+        status='STATUS', provider='PROVIDER', packages='PACKAGES', tags='TAGS')
+
+    for environment in cloud_hero.list_environments():
+        for node in environment['nodes']:
+            node_data = {
+                'node_id': node['id'],
+                'node_name': node['name'],
+                'environment_id': environment['id'],
+                'environment_name': environment['name'],
+                'status': 'TBD',
+                'provider': 'TBD',
+                'public_ip': node.get('public_ip', '-'),
+                'private_ip': node.get('private_ip', '-'),
+                'packages': ','.join(node['packages']),
+                'tags': tags_for_pprint(node['tags'])
+            }
+            print(node_format.format(**node_data))
+
+
+@nodes.command('delete', help='Remove an existing node')
+@click.option('-f', '--force', is_flag=True, help='Force remove node')
+@click.option('-id', '--node_id', prompt=True,
+              help='Node ID to be removed')
+def delete_node(**kwargs):
+    cloud_hero.delete_node(kwargs['node_id'], force=True)
+
+
+@hero.group(help='Environment set-up')
+def environments():
+    pass
+
+
+@environments.command('add', help='Add environment')
+@click.option('-p', '--provider', prompt=True,
+              help='Choose one of your providers')
+@click.option('-l', '--location', prompt=True,
+              help='Cloud provider location/region for environment')
+@click.option('-n', '--name', prompt=True, help='Environment name')
+def add_environment(**kwargs):
+    data = {
+        'region': kwargs['location'],
+        'environment': kwargs['name'],
+    }
+    if kwargs['provider']:
+        data['provider_id'] = kwargs['provider']
+
+    cloud_hero.create_environment(data)
+
+
+@environments.command('delete', help='Remove an existing environment')
+@click.option('-f', '--force', is_flag=True, default=False,
+              help='Force remove environment')
+@click.option('-id', '--environment_id', prompt=True,
+              help='Environment ID to be removed')
+def delete_environment(**kwargs):
+    cloud_hero.delete_environment(kwargs['environment_id'], force=True)
+
+
+@environments.command('ls', help='List all your environments')
+def list_environments():
+    format_string = ('{id:<30}{name:<20}{os_region:<15}{nodes_count:<10}'
+                     '{node[name]:<15}')
+    format_string_no_node = ('{id:<30}{name:<20}{os_region:<15}{nodes_count:<10}')
+    format_string_node = '{:<70}{node[name]:<15}'
+    print (format_string.format(
+        id='ENVIRONMENT-ID', name='NAME', os_region='LOCATION',
+        nodes_count='NODES', node={'name': 'NODE-NAMES'}))
+
+    for environment in cloud_hero.list_environments():
+        environment_nodes = environment['nodes']
+        environment['nodes_count'] = len(environment_nodes)
+        if not environment_nodes:
+            print(format_string_no_node.format(**environment))
+            continue
+        for index, node in enumerate(environment_nodes):
+            environment['node'] = node
+            if index == 0:
+                print format_string.format(**environment)
+                continue
+            print(format_string_node.format('', **environment))
+
+
+@hero.group(help='Cloud providers')
+def providers():
+    pass
+
+
+@providers.command('add', help='Add a new provider')
+@click.option('-d', '--driver', prompt=True, help='Cloud provider type (e.g. ec2, digital_ocean)')
+@click.option('--aws-access-key', prompt=True, help='Amazon access key')
+@click.option('--aws-secret-key', prompt=True, help='Amazon secret key')
+@click.option('--digital-ocean-token', prompt=True, help='DigitalOcean access token')
+@click.option('--name', prompt=True, help='Provider name')
+def add_provider(**kwargs):
+    data = {
+        'cloud_provider': kwargs['driver'],
+        'provider_name': kwargs['name'],
+    }
+    if kwargs.get('aws_access_key') and kwargs.get('aws_secret_key'):
+        data['accessKey'] = kwargs['aws_access_key']
+        data['secretKey'] = kwargs['aws_secret_key']
+    elif kwargs.get('digital_ocean_token'):
+        data['access_token'] = kwargs['digital_ocean_token']
+
+    cloud_hero.create_provider(data)
+
+
+@providers.command('ls', help='List all configured providers')
+@click.option('-k', '--show-keys', is_flag=True)
+def list_providers(**kwargs):
+    format_string = '{id:<30} {provider_type:<15} {name:<15}'
+    if kwargs.get('show_keys'):
+        format_string = '{id:<30} {provider_type:<15} {name:<15} {keys:<30}'
+
+    print (format_string.format(provider_type='PROVIDER-TYPE', id='PROVIDER-ID',
+                                name='NAME', keys='PROVIDER-KEYS'))
+
+    cloud_providers = cloud_hero.list_providers()
+    for provider_type, providers_list in cloud_providers.items():
+        for provider in providers_list:
+            if provider['provider_type'] == 'ec2':
+                provider['keys'] = 'key: {accessKey}, secret: {secretKey}'.format(
+                    **provider['provider_meta'])
+            else:
+                provider['keys'] = provider['provider_meta'].values()[0]
+            print(format_string.format(**provider))
+
+
+@providers.command('delete', help='Remove an existing provider')
+@click.option('-id', '--provider_id', prompt=True,
+              help='Provider ID to be removed')
+def delete_provider(**kwargs):
+    cloud_hero.delete_provider(kwargs['provider_id'])
+
+
+@hero.group(help='Add custom integrations')
+def integrations():
+    pass
+
+
+class IntegrationsCLI(click.MultiCommand):
+
+    INTEGRATION_TYPES = cloud_hero.list_integration_types()
+
+    def list_commands(self, ctx):
+        rv = self.INTEGRATION_TYPES.keys()
+        rv.sort()
+        return rv
+
+    def get_command(self, ctx, name):
+        if name not in self.list_commands(ctx):
+            ctx.fail('No such command "%s".' % name)
+
+        params = [click.Option((('--name'), ), prompt=True)]
+        for mandatory_field in self.INTEGRATION_TYPES[name]['mandatory_fields']:
+            option_args = ('--{}'.format(mandatory_field), )
+            click_option = click.Option(option_args, prompt=True)
+            params.append(click_option)
+
+        @click.pass_context
+        def callback(ctx, **kwargs):
+            kwargs['type'] = ctx.info_name
+            cloud_hero.create_integration(kwargs)
+
+        ret = click.Command(name, params=params, callback=callback,
+                            help=self.INTEGRATION_TYPES[name]['description'])
+        return ret
+
+
+@integrations.command('add', cls=IntegrationsCLI,
+                      help='Configure a new integration')
+@click.pass_context
+def add_integration(ctx, *args, **kwargs):
+    pass
+
+
+@integrations.command('ls', help='List all configured integrations')
+def list_integrations():
+    string_format = '{id:<30}{type:<20}{name:<15}{meta:<30}'
+    print string_format.format(type='INTEGRATION-TYPE', id='INTEGRATION-ID',
+                               name='NAME', meta='INTEGRATION-METADATA')
+    for integration in cloud_hero.list_integrations():
+        integration['meta'] = tags_for_pprint(integration['integration_meta'])
+        print string_format.format(**integration)
+
+
+@integrations.command('delete', help='Remove an integration')
+@click.option('-id', '--integration_id', prompt=True,
+              help='Integration ID to be removed')
+def delete_integration(**kwargs):
+    cloud_hero.delete_integration(kwargs['integration_id'])
+
+
+@hero.command(help='Logout user')
+def logout():
+    forget_token()
+
+
+@hero.command(help='Login user')
+@click.option('-e', '--email', prompt=True, help='Email')
+@click.option('-p', '--password', prompt=True, hide_input=True, help='Password')
+def login(**kwargs):
+    persist_token(cloud_hero.login(**kwargs))
+    print('Let\'s launch some servers!')
+
+
+@hero.command(help='Create account')
+@click.option('-u', '--username', prompt=True, help='Username')
+@click.option('-p', '--password', prompt=True, confirmation_prompt=True,
+              hide_input=True, help='Password')
+@click.option('-e', '--email', prompt=True, help='Email')
+def register(**kwargs):
+    data = cloud_hero.register(kwargs['email'], kwargs['password'],
+                               kwargs['username'])
+
+    # Handle registration errors.
+    errors = data.get('errors')
+    if errors:
+        for error_field, error_data in errors.items():
+            print('Invalid {:<15} {}'.format(error_field,
+                                             error_data[0]))
+        sys.exit(1)
+
+    # Persist token.
+    user_token = str(data['persistent_token'])
+    persist_token(user_token)
+
+    # And welcome user :)
+    print('Welcome to CloudHero, {username}!'.format(**kwargs))
+
+
+if __name__ == '__main__':
+    hero()
