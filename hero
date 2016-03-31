@@ -237,7 +237,7 @@ def add_environment(**kwargs):
     data = {
         'region': kwargs['location'],
         'environment': kwargs['name'],
-        'provider_id': kwargs['provider']
+        'provider_id': kwargs['provider_id']
     }
     log_response(cloud_hero.create_environment(data))
 
