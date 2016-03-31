@@ -1,6 +1,8 @@
 import json
 import requests
 
+from utils import remove_none_dict_values
+
 DEFAULT_CLIENT_VERSION = '1.0'
 DEFAULT_TIMEOUT_SECONDS = 60
 
@@ -12,7 +14,6 @@ ENDPOINTS = {
     'register': '/accounts/register',
     'login': '/accounts/tokens',
     'providers': '/providers',
-    'integrations_types': '/integrations/types',
     'integrations': '/integrations',
     'nodes': '/environments/{}/nodes',
     'nodes_delete': '/nodes',
@@ -25,10 +26,14 @@ ENDPOINTS = {
 class Client(object):
 
     def __init__(self, base_url=None, token=None,
-                 timeout=DEFAULT_TIMEOUT_SECONDS):
+                 timeout=DEFAULT_TIMEOUT_SECONDS,
+                 raise_for_status=True,
+                 clean_up_arguments=False):
         self.timeout = timeout
         self.token = token
         self.base_url = base_url
+        self.raise_for_status = raise_for_status
+        self.clean_up_arguments = clean_up_arguments
         if self.base_url is None:
             self.base_url = 'https://api.cloudhero.io'
 
@@ -58,11 +63,14 @@ class Client(object):
     def list_providers(self):
         return self._result(self.get(ENDPOINTS['providers']))
 
+    def show_providers(self):
+        return self._result(self.options(ENDPOINTS['providers']))
+
     def delete_provider(self, item_id):
         return self._result(self.delete_item(ENDPOINTS['providers'], item_id))
 
-    def list_integration_types(self):
-        return self._result(self.get(ENDPOINTS['integrations_types']))
+    def show_integration_types(self):
+        return self._result(self.options(ENDPOINTS['integrations']))
 
     def create_integration(self, data):
         return self._result(self.post_json(ENDPOINTS['integrations'], data))
@@ -105,23 +113,35 @@ class Client(object):
         result = self.delete_json(self._scale_endpoint(environment_id), data)
         return self._result(result)
 
+    def show_options(self, endpoint):
+        return self._result(self.options(ENDPOINTS[endpoint]))
+
+    def create_from_options(self, endpoint, data):
+        return self._result(self.post_json(ENDPOINTS[endpoint], data))
+
     def post_json(self, endpoint, data=None, **kwargs):
-        if 'headers' not in kwargs:
-            kwargs['headers'] = {}
+        kwargs.setdefault('headers', {})
         kwargs['headers']['Content-Type'] = 'application/json'
+        if self.clean_up_arguments:
+            data = remove_none_dict_values(data)
         kwargs['data'] = json.dumps(data)
         return self.post(endpoint, **kwargs)
 
     def delete_json(self, endpoint, data=None, **kwargs):
-        if 'headers' not in kwargs:
-            kwargs['headers'] = {}
+        kwargs.setdefault('headers', {})
         kwargs['headers']['Content-Type'] = 'application/json'
+        if self.clean_up_arguments:
+            data = remove_none_dict_values(data)
         kwargs['data'] = json.dumps(data)
         return self.delete(endpoint, **kwargs)
 
     def delete_item(self, endpoint, item_id, **kwargs):
         endpoint = '{endpoint}/{id}'.format(endpoint=endpoint, id=item_id)
         return self.delete(endpoint, **kwargs)
+
+    def options(self, endpoint, **kwargs):
+        return self.make_request(endpoint, 'OPTIONS',
+                                 **self._update_request(kwargs))
 
     def post(self, endpoint, **kwargs):
         return self.make_request(endpoint, 'POST',
@@ -148,9 +168,7 @@ class Client(object):
 
     def _update_request(self, kwargs):
         kwargs.setdefault('timeout', self.timeout)
-
-        if 'headers' not in kwargs:
-            kwargs['headers'] = {}
+        kwargs.setdefault('headers', {})
 
         if self.token:
             kwargs['headers']['Authentication-Token'] = self.token
@@ -158,7 +176,8 @@ class Client(object):
         return kwargs
 
     def _result(self, response, json=True):
-        self._raise_for_status(response)
+        if self.raise_for_status:
+            self._raise_for_status(response)
 
         if json:
             return response.json()
