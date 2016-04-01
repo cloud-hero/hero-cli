@@ -4,6 +4,8 @@ import os
 import sys
 
 import click
+from click.exceptions import ClickException
+import requests
 from pyhero import Client
 
 VERBOSE = False
@@ -13,7 +15,6 @@ CLOUD_HERO_URI = 'http://s.cloudhero.io'
 CLOUD_HERO_TOKEN_ENV_VARIABLE = 'CLOUD_HERO_TOKEN'
 CLOUD_HERO_SETTINGS_PATH = '~/.herorc'
 
-
 def persist_token(user_token):
     """
     Set token environment variable.
@@ -21,25 +22,21 @@ def persist_token(user_token):
     os.environ['CLOUD_HERO_TOKEN'] = user_token
     write(user_token)
 
-
 def forget_token():
     """
     Unset token environment variable.
     """
-    env_token = os.environ.get('CLOUD_HERO_TOKEN', None)
+    env_token = os.environ.get(CLOUD_HERO_TOKEN_ENV_VARIABLE, None)
     del env_token
     delete_token()
-
 
 def write(content):
     """
     Write token to config file.
     """
-    # TODO: this needs improvement, we're just setting the token in the file.
     config_file_path = os.path.expanduser(CLOUD_HERO_SETTINGS_PATH)
     with open(config_file_path, "w") as file_handler:
         file_handler.write(content)
-
 
 def read_token():
     """
@@ -53,7 +50,6 @@ def read_token():
         token_from_file = file_handler.read()
         return token_from_file.strip().replace('\n', '').replace('\t', '')
 
-
 def delete_token():
     """
     Remove token.
@@ -64,14 +60,34 @@ def delete_token():
     except OSError:
         print('You are already logged out!')
 
+def exception_handler(api_exception):
+    if isinstance(api_exception, requests.HTTPError):
+        response = api_exception.response
+
+        status_code = response.status_code
+        content = response.json()
+        if status_code == 500:
+            message = 'CloudHero server error'
+        elif status_code == 409:
+            message = '{message} - ID {id}'.format(**content)
+        elif status_code == 404:
+            message = 'Resource not found'
+        elif status_code == 401:
+            message = 'Create an account and login, to have access to this!'
+        elif status_code == 400:
+            message = content.get('error')
+        else:
+            message = content
+
+        show_user = ('({}) {}'.format(status_code, message))
+        raise ClickException(show_user)
 
 token = os.environ.get(CLOUD_HERO_TOKEN_ENV_VARIABLE)
 if not token:
     token = read_token()
 cloud_hero = Client(base_url=CLOUD_HERO_URI, token=token,
-                    raise_for_status=False,
+                    exception_callback=exception_handler,
                     clean_up_arguments=True)
-
 
 def verify_one_of(kwargs, *args):
     args_for_printing = '/'.join(['--{}'.format(arg) for arg in args])
@@ -83,13 +99,11 @@ def verify_one_of(kwargs, *args):
     if len(arguments_provided) > 1:
         sys.exit('Provide just one of {}'.format(args_for_printing))
 
-
 def tags_for_pprint(tags):
     if not tags:
         return '-'
     return ', '.join(['{}:{}'.format(key, value)
                       for key, value in tags.items()])
-
 
 def tags_to_dict(kwargs):
     """
@@ -105,17 +119,13 @@ def tags_to_dict(kwargs):
         dict_tags[key] = value
     kwargs['tags'] = dict_tags
 
-
 def log_response(response):
     if not response:
         return
-    if response.get('error'):
-        print('ERROR: {error}'.format(**response))
     elif response.get('message'):
         print('{message}'.format(**response))
     elif response.get('id'):
         print('Created "{name}" (ID {id})'.format(**response))
-
 
 # ------------------------------------------------------------------------
 # ROOT-LEVEL
@@ -129,11 +139,9 @@ def hero(**kwargs):
         global VERBOSE
         VERBOSE = True
 
-
 @hero.command('token', help='See your token')
 def show_token():
     print token
-
 
 # ------------------------------------------------------------------------
 # NODES
@@ -141,7 +149,6 @@ def show_token():
 @hero.group(help='Nodes operations')
 def nodes():
     pass
-
 
 @nodes.command('add', short_help='Add node', help='Add node')
 @click.option('-e', '--environment_id', required=True, prompt=True, help='Environment ID')
@@ -155,7 +162,6 @@ def add_node(**node_kwargs):
         node_kwargs['packages'] = node_kwargs['packages'].split(',')
     tags_to_dict(node_kwargs)
     log_response(cloud_hero.add_node(environment_id, [node_kwargs]))
-
 
 @nodes.command('scale', help='Scale based node')
 @click.option('-e', '--environment_id', required=True, prompt=True, help='Environment ID')
@@ -179,7 +185,6 @@ def scale_node(**kwargs):
         kwargs['count'] = int(kwargs.pop('down'))
         log_response(cloud_hero.scale_down_node(environment_id, kwargs))
 
-
 @nodes.command('ls', short_help='List all your nodes',
                help='List all your nodes')
 def list_nodes():
@@ -193,7 +198,8 @@ def list_nodes():
         public_ip='PUBLIC-IP', private_ip='PRIVATE-IP',
         status='STATUS', provider='PROVIDER', packages='PACKAGES', tags='TAGS')
 
-    for environment in cloud_hero.list_environments():
+    environments = cloud_hero.list_environments()
+    for environment in environments:
         for node in environment['nodes']:
             node_data = {
                 'node_id': node['id'],
@@ -208,7 +214,6 @@ def list_nodes():
                 'tags': tags_for_pprint(node['tags'])
             }
             print(node_format.format(**node_data))
-
 
 @nodes.command('delete', short_help='Remove an existing node',
                help='Remove an existing node')
@@ -225,7 +230,6 @@ def delete_node(**kwargs):
 def environments():
     pass
 
-
 @environments.command('add', short_help='Add environment',
                       help='Add environment')
 @click.option('-l', '--location', prompt=True,
@@ -241,7 +245,6 @@ def add_environment(**kwargs):
     }
     log_response(cloud_hero.create_environment(data))
 
-
 @environments.command('delete', short_help='Remove an existing environment',
                       help='Remove an existing environment')
 @click.option('-f', '--force', is_flag=True, default=False,
@@ -252,7 +255,6 @@ def delete_environment(**kwargs):
     response = cloud_hero.delete_environment(kwargs['environment_id'],
                                              force=True)
     log_response(response)
-
 
 @environments.command('ls', short_help='List all your environments',
                       help='List all your environments')
@@ -265,7 +267,8 @@ def list_environments():
         id='ENVIRONMENT-ID', name='NAME', os_region='LOCATION',
         nodes_count='NODES', node={'name': 'NODE-NAMES'}))
 
-    for environment in cloud_hero.list_environments():
+    environments = cloud_hero.list_environments()
+    for environment in environments:
         environment_nodes = environment['nodes']
         environment['nodes_count'] = len(environment_nodes)
         if not environment_nodes:
@@ -278,14 +281,12 @@ def list_environments():
                 continue
             print(format_string_node.format('', **environment))
 
-
 # ------------------------------------------------------------------------
 # PROVIDERS
 # ------------------------------------------------------------------------
 @hero.group(help='Cloud providers')
 def providers():
     pass
-
 
 class OptionsBasedCLI(click.MultiCommand):
 
@@ -326,7 +327,6 @@ class OptionsBasedCLI(click.MultiCommand):
                                        help=api_description[name]['description'])
         return cmd_return
 
-
 @providers.command('add', cls=OptionsBasedCLI, command_type='providers',
                    field_type='cloud_provider',
                    short_help='Add a new cloud provider',
@@ -334,7 +334,6 @@ class OptionsBasedCLI(click.MultiCommand):
 @click.pass_context
 def add_cloud_provider(ctx, *args, **kwargs):
     pass
-
 
 @providers.command('ls', short_help='List all configured providers',
                    help='List all configured providers')
@@ -357,7 +356,6 @@ def list_providers(**kwargs):
                 provider['keys'] = provider['provider_meta'].values()[0]
             print(format_string.format(**provider))
 
-
 @providers.command('delete', short_help='Remove a provider',
                    help='Remove a provider')
 @click.option('-id', '--provider_id', prompt=True,
@@ -365,14 +363,12 @@ def list_providers(**kwargs):
 def delete_provider(**kwargs):
     log_response(cloud_hero.delete_provider(kwargs['provider_id']))
 
-
 # ------------------------------------------------------------------------
 # INTEGRATIONS
 # ------------------------------------------------------------------------
 @hero.group(help='Add custom integrations')
 def integrations():
     pass
-
 
 @integrations.command('add', cls=OptionsBasedCLI, command_type='integrations',
                       field_type='type',
@@ -382,17 +378,16 @@ def integrations():
 def add_integration(ctx, *args, **kwargs):
     pass
 
-
 @integrations.command('ls', short_help='List all configured integrations',
                       help='List all configured integrations')
 def list_integrations():
     string_format = '{id:<30}{type:<20}{name:<15}{meta:<30}'
     print string_format.format(type='INTEGRATION-TYPE', id='INTEGRATION-ID',
                                name='NAME', meta='INTEGRATION-METADATA')
-    for integration in cloud_hero.list_integrations():
+    integrations = cloud_hero.list_integrations()
+    for integration in integrations:
         integration['meta'] = tags_for_pprint(integration['integration_meta'])
         print string_format.format(**integration)
-
 
 @integrations.command('delete', short_help='Remove an integration',
                       help='Remove an integration')
@@ -401,7 +396,6 @@ def list_integrations():
 def delete_integration(**kwargs):
     cloud_hero.delete_integration(kwargs['integration_id'])
 
-
 # ------------------------------------------------------------------------
 # AUTH-RELATED
 # ------------------------------------------------------------------------
@@ -409,14 +403,12 @@ def delete_integration(**kwargs):
 def logout():
     forget_token()
 
-
 @hero.command(short_help='Login user', help='Login user')
 @click.option('-e', '--email', prompt=True, help='Email')
 @click.option('-p', '--password', prompt=True, hide_input=True, help='Password')
 def login(**kwargs):
     persist_token(cloud_hero.login(**kwargs))
     print('Let\'s launch some servers!')
-
 
 @hero.command(short_help='Create account', help='Create account')
 @click.option('-u', '--username', prompt=True, help='Username')
@@ -441,7 +433,6 @@ def register(**kwargs):
 
     # And welcome user :)
     print('Welcome to CloudHero, {username}!'.format(**kwargs))
-
 
 if __name__ == '__main__':
     hero()

@@ -9,7 +9,6 @@ DEFAULT_TIMEOUT_SECONDS = 60
 class NotFound(Exception): pass
 class APIError(Exception): pass
 
-
 ENDPOINTS = {
     'register': '/accounts/register',
     'login': '/accounts/tokens',
@@ -22,17 +21,16 @@ ENDPOINTS = {
     'swarm': '/swarm',
 }
 
-
 class Client(object):
 
     def __init__(self, base_url=None, token=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS,
-                 raise_for_status=True,
+                 exception_callback=None,
                  clean_up_arguments=False):
         self.timeout = timeout
         self.token = token
         self.base_url = base_url
-        self.raise_for_status = raise_for_status
+        self.exception_callback = exception_callback
         self.clean_up_arguments = clean_up_arguments
         if self.base_url is None:
             self.base_url = 'https://api.cloudhero.io'
@@ -176,8 +174,11 @@ class Client(object):
         return kwargs
 
     def _result(self, response, json=True):
-        if self.raise_for_status:
-            self._raise_for_status(response)
+        try:
+            response.raise_for_status()
+        except Exception as exception:
+            if self.exception_callback:
+                return self.exception_callback(exception)
 
         if json:
             return response.json()
@@ -187,11 +188,3 @@ class Client(object):
         if isinstance(response, dict) and response.get('persistent_token'):
             self.token = response['persistent_token']
         return self.token
-
-    def _raise_for_status(self, response):
-        try:
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if e.response.status_code == 404:
-                raise NotFound(e, response)
-            raise APIError(e, response)
