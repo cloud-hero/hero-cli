@@ -188,10 +188,8 @@ def scale_node(**kwargs):
 @nodes.command('ls', short_help='List all your nodes',
                help='List all your nodes')
 def list_nodes():
-    node_format = ('{node_id:<25}{node_name:<20}'
-                   '{environment_id:<25}{environment_name:<20}'
-                   '{status:<10}{provider:<10}{public_ip:<17}{private_ip:<17}'
-                   '{packages:<15}{tags:<15}')
+    node_format = ('{node_name:<20}{environment_name:<20}{public_ip:<17}{private_ip:<17}'
+                   '{status:<10}{provider:<10}{packages:<15}{node_id:<25}{environment_id:<25}')
     print node_format.format(
         node_id='NODE-ID', node_name='NODE-NAME',
         environment_id='ENVIRONMENT-ID', environment_name='ENVIRONMENT-NAME',
@@ -259,9 +257,9 @@ def delete_environment(**kwargs):
 @environments.command('ls', short_help='List all your environments',
                       help='List all your environments')
 def list_environments():
-    format_string = ('{id:<30}{name:<20}{os_region:<15}{nodes_count:<10}'
-                     '{node[name]:<15}')
-    format_string_no_node = ('{id:<30}{name:<20}{os_region:<15}{nodes_count:<10}')
+    format_string = ('{name:<20}{os_region:<15}{nodes_count:<10}'
+                     '{node[name]:<15}{id:<30}')
+    format_string_no_node = ('{name:<20}{os_region:<15}{nodes_count:<10}{id:<30}')
     format_string_node = '{:<70}{node[name]:<15}'
     print (format_string.format(
         id='ENVIRONMENT-ID', name='NAME', os_region='LOCATION',
@@ -339,9 +337,9 @@ def add_cloud_provider(ctx, *args, **kwargs):
                    help='List all configured providers')
 @click.option('-k', '--show-keys', is_flag=True, help='Show provider keys')
 def list_providers(**kwargs):
-    format_string = '{id:<30} {provider_type:<15} {name:<15}'
+    format_string = '{name:<15}{provider_type:<15}{id:<30}'
     if kwargs.get('show_keys'):
-        format_string = '{id:<30} {provider_type:<15} {name:<15} {keys:<30}'
+        format_string = '{name:<15}{provider_type:<15}{id:<30}{keys:<30}'
 
     print (format_string.format(provider_type='PROVIDER-TYPE', id='PROVIDER-ID',
                                 name='NAME', keys='PROVIDER-KEYS'))
@@ -381,7 +379,7 @@ def add_integration(ctx, *args, **kwargs):
 @integrations.command('ls', short_help='List all configured integrations',
                       help='List all configured integrations')
 def list_integrations():
-    string_format = '{id:<30}{type:<20}{name:<15}{meta:<30}'
+    string_format = '{name:<15}{type:<20}{meta:<30}{id:<30}'
     print string_format.format(type='INTEGRATION-TYPE', id='INTEGRATION-ID',
                                name='NAME', meta='INTEGRATION-METADATA')
     integrations = cloud_hero.list_integrations()
