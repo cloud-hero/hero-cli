@@ -9,6 +9,7 @@ DEFAULT_TIMEOUT_SECONDS = 60
 class NotFound(Exception): pass
 class APIError(Exception): pass
 
+
 ENDPOINTS = {
     'register': '/accounts/register',
     'login': '/accounts/tokens',
@@ -20,6 +21,7 @@ ENDPOINTS = {
     'environments': '/environments',
     'swarm': '/swarm',
 }
+
 
 class Client(object):
 
@@ -43,7 +45,8 @@ class Client(object):
             'name': username,
             'user_name': username
         }
-        response = self._result(self.post_json(ENDPOINTS['register'], data))
+        response = self._result(self.post_json(ENDPOINTS['register'],
+                                               data=data))
         self._get_and_save_token(response)
         return response
 
@@ -52,11 +55,12 @@ class Client(object):
             'email': email,
             'password': password,
         }
-        response = self._result(self.post_json(ENDPOINTS['login'], data))
+        response = self._result(self.post_json(ENDPOINTS['login'], data=data))
         return self._get_and_save_token(response)
 
     def create_provider(self, data):
-        return self._result(self.post_json(ENDPOINTS['providers'], data))
+        return self._result(self.post_json(ENDPOINTS['providers'],
+                                           data=data))
 
     def list_providers(self):
         return self._result(self.get(ENDPOINTS['providers']))
@@ -71,7 +75,8 @@ class Client(object):
         return self._result(self.options(ENDPOINTS['integrations']))
 
     def create_integration(self, data):
-        return self._result(self.post_json(ENDPOINTS['integrations'], data))
+        return self._result(self.post_json(ENDPOINTS['integrations'],
+                                           data=data))
 
     def list_integrations(self):
         return self._result(self.get(ENDPOINTS['integrations']))
@@ -81,7 +86,8 @@ class Client(object):
                                              item_id))
 
     def create_environment(self, data):
-        return self._result(self.post_json(ENDPOINTS['environments'], data))
+        return self._result(self.post_json(ENDPOINTS['environments'],
+                                           data=data))
 
     def list_environments(self):
         return self._result(self.get(ENDPOINTS['environments']))
@@ -91,9 +97,9 @@ class Client(object):
         return self._result(self.delete_item(ENDPOINTS['environments'], item_id,
                                              **kwargs))
 
-    def add_node(self, environment_id, data):
+    def create_node(self, environment_id, data):
         return self._result(self.post_json(self._nodes_endpoint(environment_id),
-                                           data))
+                                           data=data))
 
     def list_nodes(self, environment_id):
         return self._result(self.get(self._nodes_endpoint(environment_id)))
@@ -104,7 +110,7 @@ class Client(object):
                                              **kwargs))
 
     def scale_up_node(self, environment_id, data):
-        result = self.post_json(self._scale_endpoint(environment_id), data)
+        result = self.post_json(self._scale_endpoint(environment_id), data=data)
         return self._result(result)
 
     def scale_down_node(self, environment_id, data):
@@ -115,7 +121,7 @@ class Client(object):
         return self._result(self.options(ENDPOINTS[endpoint]))
 
     def create_from_options(self, endpoint, data):
-        return self._result(self.post_json(ENDPOINTS[endpoint], data))
+        return self._result(self.post_json(ENDPOINTS[endpoint], data=data))
 
     def post_json(self, endpoint, data=None, **kwargs):
         kwargs.setdefault('headers', {})
