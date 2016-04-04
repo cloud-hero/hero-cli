@@ -25,7 +25,7 @@ Once installed you need to create a account. If you already have an active Cloud
 $./hero register -e my@email.com -p password -o acme 
 ```
 
-##Login
+## Login
 In order to use CloudHero CLI you need to login.
 ```bash
 $./hero login -e me@email.com -p password
@@ -47,14 +47,33 @@ $./hero providers add digital_ocean -a DO_Access_Token --name mydoprovider
 $./hero providers add ec2 -a access_key -s secret_key --name myec2provider
 ```
 
-### Delete
+#### Delete
 ```bash
 $./hero providers rm provider_id
+```
+
+#### List
+```bash
+$./hero providers ls
 ```
 
 ### Environments 
 An environment is a group (stack) of servers. You can give them any name, but we usualy call them production, staging, development.
 
+#### Create
+```bash
+$./hero env create -p provider_id -l location -n name
+```
+
+#### Delete
+```bash
+$./hero env rm environment_id
+```
+
+#### List
+```bash
+$./hero env ls
+```
 
 #### Listing your environments:
 ```bash
