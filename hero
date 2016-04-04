@@ -204,11 +204,10 @@ def scale_node(**kwargs):
 @nodes.command('ls', short_help='List all your nodes',
                help='List all your nodes')
 def list_nodes():
-    node_format = ('{node[id]:<25}{node[name]:<20}'
-                   '{environment[id]:<25}{environment[name]:<20}'
-                   '{node[status]:<10}{node[provider]:<10}{node[public_ip]:<17}'
-                   '{node[private_ip]:<17}'
-                   '{node[packages]:<15}{node[tags]:<15}')
+    node_format = ('{node[name]:<25}{environment[name]:<20}'
+                   '{node[public_ip]:<17}{node[private_ip]:<17}'
+                   '{node[status]:<10}{node[provider]:<10}{node[packages]:<15}'
+                   '{node[id]:<25}{environment[id]:<25}{node[tags]:<15}')
     print node_format.format(**PROMPTER_KWARGS)
 
     environments = cloud_hero.list_environments()
@@ -284,7 +283,7 @@ def delete_environment(**kwargs):
 @environments.command('ls', short_help='List all your environments',
                       help='List all your environments')
 def list_environments():
-    format_string = ('{node[name]:<30}{environment[location]:<15}'
+    format_string = ('{node[name]:<25}{environment[location]:<15}'
                      '{nodes_count:<15}{environment[name]:<20}'
                      '{environment[id]:<30}')
     print format_string.format(**PROMPTER_KWARGS)
@@ -367,9 +366,9 @@ def add_cloud_provider(ctx, *args, **kwargs):
                    help='List all configured providers')
 @click.option('-k', '--show-keys', is_flag=True, help='Show provider keys')
 def list_providers(**kwargs):
-    format_string = '{id:<30} {provider_type:<15} {name:<15}'
+    format_string = '{name:<15}{provider_type:<15}{id:<30}'
     if kwargs.get('show_keys'):
-        format_string = '{id:<30} {provider_type:<15} {name:<15} {keys:<30}'
+        format_string = '{name:<15}{provider_type:<15}{id:<30}{keys:<30}'
 
     print (format_string.format(provider_type='PROVIDER-TYPE', id='PROVIDER-ID',
                                 name='NAME', keys='PROVIDER-KEYS'))
@@ -412,7 +411,7 @@ def add_integration(ctx, *args, **kwargs):
 @integrations.command('ls', short_help='List all configured integrations',
                       help='List all configured integrations')
 def list_integrations():
-    string_format = '{id:<30}{type:<20}{name:<15}{meta:<30}'
+    string_format = '{name:<15}{type:<20}{meta:<30}{id:<30}'
     print string_format.format(type='INTEGRATION-TYPE', id='INTEGRATION-ID',
                                name='NAME', meta='INTEGRATION-METADATA')
     integrations = cloud_hero.list_integrations()
@@ -444,7 +443,7 @@ def ssh_to_vm(**kwargs):
 
     node_index = 0
     if len(nodes_data) > 1:
-        nodes_format = ('{index:<10}{node[name]:<20}{node[public_ip]:<20}'
+        nodes_format = ('{index:<10}{node[name]:<25}{node[public_ip]:<20}'
                         '{node[private_ip]:<20}{node[packages]:<20}'
                         '{environment[name]:<20}{environment[id]:<20}')
         print('Node exists in two environments:')
