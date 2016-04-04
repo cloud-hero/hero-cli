@@ -92,23 +92,35 @@ Below you cand find a list of available packages:
 * mongodb
 * glusterfs
 
-
-#### Listing your environments:
+##### Scale
+This option allows you to horizontally scale any running node, both up and down.
+####### UP
 ```bash
-$./hero environments ls
-ENVIRONMENT-ID                NAME                LOCATION       NODES     NODE-NAMES
-56fc3d7410d3960813c70d9a      london-cluster      lon1           2         docker-test
+$./hero nodes scale up -e env_id --name node_that_you_want_to_scale / --tags tags_of_node(s)_that_you_want_to_sclae --count number_of_nodes 
 ```
 
-#### Adding a new node
+####### DOWN
 ```bash
-$./hero nodes add -e 56fc3d7410d3960813c70d9a --packages docker -tags cluster:docker,size:small --name docker-master
+$./hero nodes scale down -e env_id --name node_that_you_want_to_scale / --tags tags_of_node(s)_that_you_want_to_sclae --count number_of_nodes 
 ```
 
-#### Listing your nodes
+##### Delete
 ```bash
-$./hero nodes ls
-NODE-ID                  NODE-NAME           ENVIRONMENT-ID           ENVIRONMENT-NAME    STATUS    PROVIDER  PUBLIC-IP        PRIVATE-IP       PACKAGES       TAGS
-56fcc67e10d3960812a70d9c docker-master       56fc3d7410d3960813c70d9a london-cluster      running   do-2      178.62.40.103    10.131.13.179    docker         cluster:docker, size:small
-51fcbfcf10d3960813c70d9b mysql-db            56fc3d7410d3960813c70d9a sf-cluster          stopped   do-2      -                -                mysql   -
+$./hero nodes scale rm node_id
+```
+
+##### SSH
+This option allows you to connect securely using SSH to your nodes
+```bash
+$./hero nodes ssh node_id
+```
+
+### Docker
+You connect to any Docker Swarm cluster provisioned with CloudHero CLI or API
+```bash
+$./hero docker env_id
+
+EXPORT DOCKER_HOST=tcp://ip_of_swarm_node:4000
+# Run this command to configure your shell: 
+# eval "$(hero docker my-env)"
 ```
