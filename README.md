@@ -8,13 +8,13 @@
   - [Listing your nodes](#listing-your-nodes)
 
 ## Description
-`hero` is the CLI built on top of CloudHero's API.
+CloudHero CLI is a open-source application written in python and it is build on top of [CloudHero API](https://docs.cloudhero.io)
 
 
 ## Install
 ```
-git clone git@github.com:cloud-hero/CLI.git
-cd CLI
+git clone https://github.com/cloud-hero/hero-cli.git  
+cd hero-cli
 pip install -r requirements.txt
 ./hero
 ```
