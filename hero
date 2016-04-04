@@ -2,18 +2,18 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import paramiko
+import traceback
 
 import click
 from click.exceptions import ClickException
 import requests
+
+from constants import *
+from interactive import interactive_shell
 from pyhero import Client
-
-VERBOSE = False
-CLI_VERSION = '0.1'
-
-CLOUD_HERO_URI = 'http://s.cloudhero.io'
-CLOUD_HERO_TOKEN_ENV_VARIABLE = 'CLOUD_HERO_TOKEN'
-CLOUD_HERO_SETTINGS_PATH = '~/.herorc'
+from prompter import PROMPTER_KWARGS
+from utils import write_to_file, set_keys_to_empty_values
 
 
 def persist_token(user_token):
@@ -37,16 +37,15 @@ def write(content):
     """
     Write token to config file.
     """
-    config_file_path = os.path.expanduser(CLOUD_HERO_SETTINGS_PATH)
-    with open(config_file_path, "w") as file_handler:
-        file_handler.write(content)
+    config_file_path = os.path.expanduser(CLOUD_HERO_TOKEN)
+    write_to_file(content, config_file_path)
 
 
 def read_token():
     """
     Read CloudHero config file.
     """
-    config_file_path = os.path.expanduser(CLOUD_HERO_SETTINGS_PATH)
+    config_file_path = os.path.expanduser(CLOUD_HERO_TOKEN)
     if not os.path.isfile(config_file_path):
         return None
 
@@ -59,7 +58,7 @@ def delete_token():
     """
     Remove token.
     """
-    config_file_path = os.path.expanduser(CLOUD_HERO_SETTINGS_PATH)
+    config_file_path = os.path.expanduser(CLOUD_HERO_TOKEN)
     try:
         os.remove(config_file_path)
     except OSError:
@@ -205,30 +204,31 @@ def scale_node(**kwargs):
 @nodes.command('ls', short_help='List all your nodes',
                help='List all your nodes')
 def list_nodes():
-    node_format = ('{node_id:<25}{node_name:<20}'
-                   '{environment_id:<25}{environment_name:<20}'
-                   '{status:<10}{provider:<10}{public_ip:<17}{private_ip:<17}'
-                   '{packages:<15}{tags:<15}')
-    print node_format.format(
-        node_id='NODE-ID', node_name='NODE-NAME',
-        environment_id='ENVIRONMENT-ID', environment_name='ENVIRONMENT-NAME',
-        public_ip='PUBLIC-IP', private_ip='PRIVATE-IP',
-        status='STATUS', provider='PROVIDER', packages='PACKAGES', tags='TAGS')
+    node_format = ('{node[id]:<25}{node[name]:<20}'
+                   '{environment[id]:<25}{environment[name]:<20}'
+                   '{node[status]:<10}{node[provider]:<10}{node[public_ip]:<17}'
+                   '{node[private_ip]:<17}'
+                   '{node[packages]:<15}{node[tags]:<15}')
+    print node_format.format(**PROMPTER_KWARGS)
 
     environments = cloud_hero.list_environments()
     for environment in environments:
         for node in environment['nodes']:
             node_data = {
-                'node_id': node['id'],
-                'node_name': node['name'],
-                'environment_id': environment['id'],
-                'environment_name': environment['name'],
-                'status': 'TBD',
-                'provider': environment['provider']['name'],
-                'public_ip': node.get('public_ip', '-'),
-                'private_ip': node.get('private_ip', '-'),
-                'packages': ','.join(node['packages']),
-                'tags': tags_for_pprint(node['tags'])
+                'node': {
+                    'id': node['id'],
+                    'name': node['name'],
+                    'status': 'TBD',
+                    'provider': environment['provider']['name'],
+                    'public_ip': node.get('public_ip', '-'),
+                    'private_ip': node.get('private_ip', '-'),
+                    'packages': ','.join(node['packages']),
+                    'tags': tags_for_pprint(node['tags'])
+                },
+                'environment': {
+                    'id': environment['id'],
+                    'name': environment['name'],
+                }
             }
             print(node_format.format(**node_data))
 
@@ -284,27 +284,28 @@ def delete_environment(**kwargs):
 @environments.command('ls', short_help='List all your environments',
                       help='List all your environments')
 def list_environments():
-    format_string = ('{id:<30}{name:<20}{os_region:<15}{nodes_count:<10}'
-                     '{node[name]:<15}')
-    format_string_no_node = ('{id:<30}{name:<20}{os_region:<15}{nodes_count:<10}')
-    format_string_node = '{:<70}{node[name]:<15}'
-    print (format_string.format(
-        id='ENVIRONMENT-ID', name='NAME', os_region='LOCATION',
-        nodes_count='NODES', node={'name': 'NODE-NAMES'}))
+    format_string = ('{node[name]:<30}{environment[location]:<15}'
+                     '{nodes_count:<15}{environment[name]:<20}'
+                     '{environment[id]:<30}')
+    print format_string.format(**PROMPTER_KWARGS)
 
     environments = cloud_hero.list_environments()
     for environment in environments:
-        environment_nodes = environment['nodes']
-        environment['nodes_count'] = len(environment_nodes)
-        if not environment_nodes:
-            print(format_string_no_node.format(**environment))
-            continue
-        for index, node in enumerate(environment_nodes):
-            environment['node'] = node
+        environment_data = {
+            'environment': {
+                'id': environment['id'],
+                'name': environment['name'],
+                'location': environment['os_region'],
+            },
+            'nodes_count': len(environment['nodes'])
+        }
+        for index, node in enumerate(environment['nodes']):
             if index == 0:
-                print format_string.format(**environment)
+                print format_string.format(node=node, **environment_data)
                 continue
-            print(format_string_node.format('', **environment))
+
+            environment_data = set_keys_to_empty_values(environment_data)
+            print(format_string.format(node=node, **environment_data))
 
 
 # ------------------------------------------------------------------------
@@ -426,6 +427,66 @@ def list_integrations():
               help='Integration ID to be removed')
 def delete_integration(**kwargs):
     cloud_hero.delete_integration(kwargs['integration_id'])
+
+
+# ------------------------------------------------------------------------
+# SSH
+# ------------------------------------------------------------------------
+@hero.command('ssh', help='SSH to virtual machine')
+@click.argument('host', required=True)
+def ssh_to_vm(**kwargs):
+    host_name = kwargs['host']
+    node_details = cloud_hero.get_all_details()
+    if not node_details.get(host_name):
+        sys.exit('No node with name {} found!'.format(host_name))
+
+    nodes_data = node_details[host_name]
+
+    node_index = 0
+    if len(nodes_data) > 1:
+        nodes_format = ('{index:<10}{node[name]:<20}{node[public_ip]:<20}'
+                        '{node[private_ip]:<20}{node[packages]:<20}'
+                        '{environment[name]:<20}{environment[id]:<20}')
+        print('Node exists in two environments:')
+        print(nodes_format.format(**PROMPTER_KWARGS))
+        for index, node_data in enumerate(nodes_data):
+            node_data['node']['packages'] = ','.join(node_data['node']['packages'])
+            print nodes_format.format(index=index, **node_data)
+        user_prompt = 'Pick the node you want to ssh to'.format(nodes_format)
+        node_index = click.prompt(user_prompt, default=0)
+    remote_ip = nodes_data[node_index]['node']['public_ip']
+    remote_user = 'root'
+
+    # Get key and write it to the local path
+    expanded_file_path = os.path.expanduser(SSH_KEY_PATH)
+    if not os.path.exists(expanded_file_path):
+        ssh_key_content = cloud_hero.list_key()['content']
+        write_to_file(ssh_key_content, expanded_file_path)
+        os.chmod(expanded_file_path, 0600)
+
+    # Connect to remote host.
+    try:
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.WarningPolicy())
+        print('Connecting to {} ...'.format(remote_ip))
+        rsa_key = paramiko.RSAKey.from_private_key_file(expanded_file_path)
+        client.connect(remote_ip, username=remote_user, pkey=rsa_key)
+
+        chan = client.invoke_shell()
+        print('*** Here we go!\n')
+        interactive_shell(chan)
+        chan.close()
+        client.close()
+
+    except Exception as e:
+        print('*** Caught exception: %s: %s' % (e.__class__, e))
+        traceback.print_exc()
+        try:
+            client.close()
+        except:
+            pass
+        sys.exit(1)
 
 
 # ------------------------------------------------------------------------
