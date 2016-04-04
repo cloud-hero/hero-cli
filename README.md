@@ -1,3 +1,9 @@
+Welcome to the CloudHero CLI! You can use our CLI to create any type of server environments or a scalable and high available container service on top of major public or private cloud providers.
+
+A simple use case is to create a scalable and high available Docker cluster on top of your favourite cloud provider.
+
+![CloudHero Block Architecture](/images/ch-block.png)
+
 ### CloudHero CLI
 
 - [Description](#description)
