@@ -19,7 +19,20 @@ pip install -r requirements.txt
 ./hero
 ```
 
+## Account Registration
+Once installed you need to create a account. If you already have an active CloudHero account you can skip this step.
+```bash
+$./hero register -e my@email.com -p password -o acme 
+```
+
+##Login
+In order to use CloudHero CLI you need to login.
+```bash
+$./hero login -e me@email.com -p password
+```
+
 ## Usage examples
+
 
 #### Listing your environments:
 ```bash
