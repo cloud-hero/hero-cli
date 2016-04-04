@@ -13,7 +13,8 @@ from constants import *
 from interactive import interactive_shell
 from pyhero import Client
 from prompter import PROMPTER_KWARGS
-from utils import write_to_file, set_keys_to_empty_values
+from utils import (write_to_file, set_keys_to_empty_values,
+                   get_docker_ip_for_environment)
 
 
 def persist_token(user_token):
@@ -141,7 +142,16 @@ def log_response(response):
 # ------------------------------------------------------------------------
 # ROOT-LEVEL
 # ------------------------------------------------------------------------
-@click.group()
+class OrderedHeroCommands(click.Group):
+
+    COMMANDS_ORDER = ['register', 'login', 'providers', 'environments',
+                      'nodes', 'docker', 'ssh']
+
+    def list_commands(self, ctx):
+        return self.COMMANDS_ORDER
+
+
+@click.group(cls=OrderedHeroCommands)
 @click.version_option(version=CLI_VERSION, help='Show the version')
 @click.help_option('-h', '--help', help='Show usage')
 @click.help_option('-v', '--verbose', help='Enable verbose mode')
@@ -232,16 +242,15 @@ def list_nodes():
             print(node_format.format(**node_data))
 
 
-@nodes.command('delete', short_help='Remove an existing node',
+@nodes.command('rm', short_help='Remove an existing node',
                help='Remove an existing node')
 @click.argument('node_id', required=False)
-@click.option('-f', '--force', is_flag=True, help='Force remove node')
 @click.option('-id', '--node_id', help='Node ID to be removed')
-def delete_node(**kwargs):
+def remove_node(**kwargs):
     node_id = kwargs.get('node_id')
     if not node_id:
         node_id = click.prompt('Node id')
-    log_response(cloud_hero.delete_node(node_id, force=True))
+    log_response(cloud_hero.delete_node(node_id))
 
 
 # ------------------------------------------------------------------------
@@ -268,16 +277,15 @@ def add_environment(**kwargs):
     log_response(cloud_hero.create_environment(data))
 
 
-@environments.command('delete', short_help='Remove an existing environment',
+@environments.command('rm', short_help='Remove an existing environment',
                       help='Remove an existing environment')
-@click.option('-f', '--force', is_flag=True, default=False,
-              help='Force remove environment')
-@click.option('-id', '--environment_id', prompt=True,
-              help='Environment ID to be removed')
-def delete_environment(**kwargs):
-    response = cloud_hero.delete_environment(kwargs['environment_id'],
-                                             force=True)
-    log_response(response)
+@click.argument('environment_id', required=False)
+@click.option('-id', '--environment_id', help='Environment ID to be removed')
+def remove_environment(**kwargs):
+    environment_id = kwargs.get('environment_id')
+    if not environment_id:
+        environment_id = click.prompt('Environment id')
+    log_response(cloud_hero.delete_environment(environment_id))
 
 
 @environments.command('ls', short_help='List all your environments',
@@ -314,6 +322,7 @@ def list_environments():
 def providers():
     pass
 
+
 class OptionsBasedCLI(click.MultiCommand):
 
     def __init__(self, *args, **kwargs):
@@ -331,14 +340,17 @@ class OptionsBasedCLI(click.MultiCommand):
             ctx.fail('No such command "%s".' % name)
 
         api_description = cloud_hero.show_options(self.command_type)
-        params = [click.Option((('--name'), ), prompt=True)]
+        params = [click.Option((('--name'), ))]
         for mandatory_field in api_description[name]['mandatory_fields']:
             option_args = ('--{}'.format(mandatory_field), )
-            click_option = click.Option(option_args, prompt=True)
+            click_option = click.Option(option_args)
             params.append(click_option)
 
         @click.pass_context
         def callback(ctx, **kwargs):
+            if list(set(kwargs.values())) == [None]:
+                sys.exit(ctx.get_help())
+
             kwargs[self.field_type] = ctx.info_name
             # Hacks
             if self.command_type == 'providers':
@@ -346,6 +358,7 @@ class OptionsBasedCLI(click.MultiCommand):
                     kwargs['accessKey'] = kwargs['accesskey']
                     kwargs['secretKey'] = kwargs['secretkey']
 
+            from ipdb import set_trace; set_trace()
             response = cloud_hero.create_from_options(self.command_type, kwargs)
             log_response(response)
 
@@ -361,6 +374,7 @@ class OptionsBasedCLI(click.MultiCommand):
 @click.pass_context
 def add_cloud_provider(ctx, *args, **kwargs):
     pass
+
 
 @providers.command('ls', short_help='List all configured providers',
                    help='List all configured providers')
@@ -384,12 +398,29 @@ def list_providers(**kwargs):
             print(format_string.format(**provider))
 
 
-@providers.command('delete', short_help='Remove a provider',
+@providers.command('rm', short_help='Remove a provider',
                    help='Remove a provider')
-@click.option('-id', '--provider_id', prompt=True,
-              help='Provider ID to be removed')
-def delete_provider(**kwargs):
-    log_response(cloud_hero.delete_provider(kwargs['provider_id']))
+@click.argument('provider_id', required=False)
+@click.option('-id', '--provider_id', help='Provider ID to be removed')
+def remove_provider(**kwargs):
+    provider_id = kwargs.get('provider_id')
+    if not provider_id:
+        provider_id = click.prompt('Provider id')
+    log_response(cloud_hero.delete_provider(provider_id))
+
+
+# ------------------------------------------------------------------------
+# DOCKER
+# ------------------------------------------------------------------------
+@hero.command('docker', help='Handle your docker cluster')
+@click.argument('environment', required=True)
+def export_docker_environment(**kwargs):
+    environment = kwargs['environment']
+    node_details = cloud_hero.get_all_details()
+    docker_ip = get_docker_ip_for_environment(node_details, environment)
+    print('export DOCKER_HOST=tcp://{}:4000'.format(docker_ip))
+    print('# Run this command to configure your shell:\n'
+          '# eval "$(hero docker {})"'.format(environment))
 
 
 # ------------------------------------------------------------------------
@@ -420,12 +451,15 @@ def list_integrations():
         print string_format.format(**integration)
 
 
-@integrations.command('delete', short_help='Remove an integration',
+@integrations.command('rm', short_help='Remove an integration',
                       help='Remove an integration')
-@click.option('-id', '--integration_id', prompt=True,
-              help='Integration ID to be removed')
-def delete_integration(**kwargs):
-    cloud_hero.delete_integration(kwargs['integration_id'])
+@click.argument('integration_id', required=False)
+@click.option('-id', '--integration_id', help='Integration ID to be removed')
+def remove_integration(**kwargs):
+    integration_id = kwargs.get('integration_id')
+    if not integration_id:
+        integration_id = click.prompt('Integration id')
+    cloud_hero.delete_integration(integration_id)
 
 
 # ------------------------------------------------------------------------
@@ -468,7 +502,7 @@ def ssh_to_vm(**kwargs):
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.WarningPolicy())
-        print('Connecting to {} ...'.format(remote_ip))
+        print('*** Connecting to {} ...'.format(remote_ip))
         rsa_key = paramiko.RSAKey.from_private_key_file(expanded_file_path)
         client.connect(remote_ip, username=remote_user, pkey=rsa_key)
 
@@ -505,13 +539,13 @@ def login(**kwargs):
 
 
 @hero.command(short_help='Create account', help='Create account')
-@click.option('-u', '--username', prompt=True, help='Username')
+@click.option('-e', '--email', prompt=True, help='Email')
 @click.option('-p', '--password', prompt=True, confirmation_prompt=True,
               hide_input=True, help='Password')
-@click.option('-e', '--email', prompt=True, help='Email')
+@click.option('-u', '--organisation', prompt=True, help='Organisation')
 def register(**kwargs):
     data = cloud_hero.register(kwargs['email'], kwargs['password'],
-                               kwargs['username'])
+                               kwargs['organisation'])
 
     # Handle registration errors.
     errors = data.get('errors')
@@ -526,7 +560,7 @@ def register(**kwargs):
     persist_token(user_token)
 
     # And welcome user :)
-    print('Welcome to CloudHero, {username}!'.format(**kwargs))
+    print('Welcome to CloudHero!'.format(**kwargs))
 
 
 if __name__ == '__main__':

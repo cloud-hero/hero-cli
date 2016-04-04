@@ -4,6 +4,8 @@ import json
 import os
 import time
 
+from constants import CLOUD_HERO_CACHE_OPTIONS
+
 
 def write_to_file(content, file_path, is_json=False):
     expanded_file_path = os.path.expanduser(file_path)
@@ -39,8 +41,12 @@ def cache_to_file(file_path, ttl=60):
     def wrap(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            cache_file = file_path
+            if cache_file == CLOUD_HERO_CACHE_OPTIONS:
+                cache_file = cache_file + '/' + args[1]
+
             # Try reading from cache file, if it was created within the TTL.
-            expanded_file_path = os.path.expanduser(file_path)
+            expanded_file_path = os.path.expanduser(cache_file)
             cached = read_cache_file(expanded_file_path, ttl)
             if cached:
                 return cached
@@ -105,3 +111,11 @@ def set_keys_to_empty_values(obj):
         return dict((k, set_keys_to_empty_values(v)) for k, v in obj.items())
     else:
         return ''
+
+
+def get_docker_ip_for_environment(node_details, environment_id):
+    for node, nodes_data in node_details.items():
+        for node_data in nodes_data:
+            if (node_data['environment']['id'] == environment_id and
+                    node_data['node']['public_ip']):
+                return node_data['node']['public_ip']
