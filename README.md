@@ -33,6 +33,28 @@ $./hero login -e me@email.com -p password
 
 ## Usage examples
 
+### Providers
+In order to deploy new servers using CloudHero CLI you need to register a cloud provider.
+Currently we support AWS EC2 and DigitalOcean.
+
+#### Add DigitalOcean
+```bash
+$./hero providers add digital_ocean -a DO_Access_Token --name mydoprovider
+```
+
+#### Add AWS EC2
+```bash
+$./hero providers add ec2 -a access_key -s secret_key --name myec2provider
+```
+
+### Delete
+```bash
+$./hero providers rm provider_id
+```
+
+### Environments 
+An environment is a group (stack) of servers. You can give them any name, but we usualy call them production, staging, development.
+
 
 #### Listing your environments:
 ```bash
