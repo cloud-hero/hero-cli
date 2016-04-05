@@ -175,11 +175,11 @@ def nodes():
 
 
 @nodes.command('add', short_help='Add node', help='Add node')
-@click.option('-e', '--environment_id', required=True, prompt=True, help='Environment ID')
-@click.option('-p', '--packages', prompt=True, help='Packages to be installed on the node')
-@click.option('-n', '--name', prompt=True, help='Node name')
-@click.option('-t', '--tags', help='Tags to be applied on the node')
+@click.option('-e', '--env', required=True, prompt=True, help='Environment ID')
+@click.option('-k', '--pkg', prompt=True, help='Packages to be installed on the node')
 @click.option('-s', '--size', help='Node size')
+@click.option('-t', '--tags', help='Tags to be applied on the node')
+@click.option('-n', '--name', prompt=True, help='Node name')
 def add_node(**node_kwargs):
     environment_id = node_kwargs.pop('environment_id')
     if node_kwargs.get('packages'):
@@ -266,13 +266,13 @@ def environments():
 @click.option('-l', '--location', prompt=True,
               help='Cloud provider location/region for environment')
 @click.option('-n', '--name', prompt=True, help='Environment name')
-@click.option('-p', '--provider_id', prompt=True,
+@click.option('-p', '--provider', prompt=True,
               help='Select the provider ID')
 def add_environment(**kwargs):
     data = {
         'region': kwargs['location'],
         'environment': kwargs['name'],
-        'provider_id': kwargs['provider_id']
+        'provider_id': kwargs['provider']
     }
     log_response(cloud_hero.create_environment(data))
 
@@ -296,8 +296,8 @@ def list_environments():
                      '{environment[id]:<30}')
     print format_string.format(**PROMPTER_KWARGS)
 
-    environments = cloud_hero.list_environments()
-    for environment in environments:
+    environments_list = cloud_hero.list_environments()
+    for environment in environments_list:
         environment_data = {
             'environment': {
                 'id': environment['id'],
@@ -306,7 +306,7 @@ def list_environments():
             },
             'nodes_count': len(environment['nodes'])
         }
-        for index, node in enumerate(environment['nodes']):
+        for index, node in enumerate(environment['nodes'] or [{'name': '-'}]):
             if index == 0:
                 print format_string.format(node=node, **environment_data)
                 continue
@@ -358,7 +358,6 @@ class OptionsBasedCLI(click.MultiCommand):
                     kwargs['accessKey'] = kwargs['accesskey']
                     kwargs['secretKey'] = kwargs['secretkey']
 
-            from ipdb import set_trace; set_trace()
             response = cloud_hero.create_from_options(self.command_type, kwargs)
             log_response(response)
 
@@ -445,8 +444,8 @@ def list_integrations():
     string_format = '{name:<15}{type:<20}{meta:<30}{id:<30}'
     print string_format.format(type='INTEGRATION-TYPE', id='INTEGRATION-ID',
                                name='NAME', meta='INTEGRATION-METADATA')
-    integrations = cloud_hero.list_integrations()
-    for integration in integrations:
+    integrations_list = cloud_hero.list_integrations()
+    for integration in integrations_list:
         integration['meta'] = tags_for_pprint(integration['integration_meta'])
         print string_format.format(**integration)
 
@@ -542,7 +541,7 @@ def login(**kwargs):
 @click.option('-e', '--email', prompt=True, help='Email')
 @click.option('-p', '--password', prompt=True, confirmation_prompt=True,
               hide_input=True, help='Password')
-@click.option('-u', '--organisation', prompt=True, help='Organisation')
+@click.option('-o', '--organisation', prompt=True, help='Organisation')
 def register(**kwargs):
     data = cloud_hero.register(kwargs['email'], kwargs['password'],
                                kwargs['organisation'])
