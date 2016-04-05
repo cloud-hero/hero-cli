@@ -144,7 +144,7 @@ def log_response(response):
 # ------------------------------------------------------------------------
 class OrderedHeroCommands(click.Group):
 
-    COMMANDS_ORDER = ['register', 'login', 'providers', 'environments',
+    COMMANDS_ORDER = ['login', 'register', 'providers', 'environments',
                       'nodes', 'docker', 'ssh']
 
     def list_commands(self, ctx):
