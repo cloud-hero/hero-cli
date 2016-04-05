@@ -16,6 +16,8 @@ from prompter import PROMPTER_KWARGS
 from utils import (write_to_file, set_keys_to_empty_values,
                    get_docker_ip_for_environment)
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
 
 def persist_token(user_token):
     """
@@ -144,14 +146,14 @@ def log_response(response):
 # ------------------------------------------------------------------------
 class OrderedHeroCommands(click.Group):
 
-    COMMANDS_ORDER = ['login', 'register', 'providers', 'environments',
-                      'nodes', 'docker', 'ssh']
+    COMMANDS_ORDER = ['login', 'register', 'providers', 'integrations',
+                      'environments', 'nodes', 'docker', 'ssh']
 
     def list_commands(self, ctx):
         return self.COMMANDS_ORDER
 
 
-@click.group(cls=OrderedHeroCommands)
+@click.group(cls=OrderedHeroCommands, context_settings=CONTEXT_SETTINGS)
 @click.version_option(version=CLI_VERSION, help='Show the version')
 @click.help_option('-h', '--help', help='Show usage')
 @click.help_option('-v', '--verbose', help='Enable verbose mode')
@@ -261,14 +263,13 @@ def environments():
     pass
 
 
-@environments.command('add', short_help='Add environment',
-                      help='Add environment')
+@environments.command('create', short_help='Create environment',
+                      help='Create environment')
+@click.option('-p', '--provider', prompt=True, help='Select the provider ID')
 @click.option('-l', '--location', prompt=True,
               help='Cloud provider location/region for environment')
 @click.option('-n', '--name', prompt=True, help='Environment name')
-@click.option('-p', '--provider', prompt=True,
-              help='Select the provider ID')
-def add_environment(**kwargs):
+def create_environment(**kwargs):
     data = {
         'region': kwargs['location'],
         'environment': kwargs['name'],
@@ -340,10 +341,13 @@ class OptionsBasedCLI(click.MultiCommand):
             ctx.fail('No such command "%s".' % name)
 
         api_description = cloud_hero.show_options(self.command_type)
-        params = [click.Option((('--name'), ))]
+        params = [click.Option((('-n'), ('--name'), ),
+                               help='{} name'.format(self.command_type.capitalize()))]
         for mandatory_field in api_description[name]['mandatory_fields']:
-            option_args = ('--{}'.format(mandatory_field), )
-            click_option = click.Option(option_args)
+            option_args = ('-{}'.format(mandatory_field['short']),
+                           '--{}'.format(mandatory_field['long']), )
+            click_option = click.Option(option_args,
+                                        help=mandatory_field['description'])
             params.append(click_option)
 
         @click.pass_context
@@ -362,7 +366,7 @@ class OptionsBasedCLI(click.MultiCommand):
             log_response(response)
 
         cmd_return = click.Command(name, params=params, callback=callback,
-                                       help=api_description[name]['description'])
+                                   help=api_description[name]['description'])
         return cmd_return
 
 
