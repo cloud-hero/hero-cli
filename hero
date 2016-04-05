@@ -146,11 +146,11 @@ def log_response(response):
 # ------------------------------------------------------------------------
 class OrderedHeroCommands(click.Group):
 
-    COMMANDS_ORDER = ['login', 'register', 'providers', 'integrations',
-                      'environments', 'nodes', 'docker', 'ssh']
+    COMMANDS_ORDER = ['login', 'register', 'provider', 'integration',
+                      'environment', 'node', 'docker', 'ssh']
 
     COMMANDS_ALIASES = {
-        'env': 'environments'
+        'env': 'environment'
     }
 
     def list_commands(self, ctx):
@@ -193,12 +193,12 @@ def show_token():
 # ------------------------------------------------------------------------
 # NODES
 # ------------------------------------------------------------------------
-@hero.group(name='nodes', help='Nodes operations')
-def nodes():
+@hero.group(name='node', help='Node operations')
+def node():
     pass
 
 
-@nodes.command('add', short_help='Add node', help='Add node')
+@node.command('add', short_help='Add node', help='Add node')
 @click.option('-e', '--environment_id', required=True, prompt=True, help='Environment ID')
 @click.option('-k', '--pkg', prompt=True, help='Packages to be installed on the node')
 @click.option('-s', '--size', help='Node size')
@@ -212,7 +212,7 @@ def add_node(**node_kwargs):
     log_response(cloud_hero.create_node(environment_id, [node_kwargs]))
 
 
-@nodes.command('scale', help='Scale based node')
+@node.command('scale', help='Scale based node')
 @click.option('-e', '--environment_id', required=True, prompt=True, help='Environment ID')
 @click.option('--name', help='Scale based on an existing node name')
 @click.option('--tags', help='Scale based on an existing node tags')
@@ -235,7 +235,7 @@ def scale_node(**kwargs):
         log_response(cloud_hero.scale_down_node(environment_id, kwargs))
 
 
-@nodes.command('ls', short_help='List all your nodes',
+@node.command('ls', short_help='List all your nodes',
                help='List all your nodes')
 def list_nodes():
     node_format = ('{node[name]:<25}{environment[name]:<20}'
@@ -266,7 +266,7 @@ def list_nodes():
             print(node_format.format(**node_data))
 
 
-@nodes.command('rm', short_help='Remove an existing node',
+@node.command('rm', short_help='Remove an existing node',
                help='Remove an existing node')
 @click.argument('node_id', required=False)
 @click.option('-id', '--node_id', help='Node ID to be removed')
@@ -278,14 +278,14 @@ def remove_node(**kwargs):
 
 
 # ------------------------------------------------------------------------
-# ENVIRONMENTS
+# ENVIRONMENT SET-UP
 # ------------------------------------------------------------------------
-@hero.group(name='environments', help='Environment set-up')
-def environments():
+@hero.group(name='environment', help='Environment set-up')
+def environment():
     pass
 
 
-@environments.command('create', short_help='Create environment',
+@environment.command('create', short_help='Create environment',
                       help='Create environment')
 @click.option('-p', '--provider', prompt=True, help='Select the provider ID')
 @click.option('-l', '--location', prompt=True,
@@ -300,7 +300,7 @@ def create_environment(**kwargs):
     log_response(cloud_hero.create_environment(data))
 
 
-@environments.command('rm', short_help='Remove an existing environment',
+@environment.command('rm', short_help='Remove an existing environment',
                       help='Remove an existing environment')
 @click.argument('environment_id', required=False)
 @click.option('-id', '--environment_id', help='Environment ID to be removed')
@@ -311,7 +311,7 @@ def remove_environment(**kwargs):
     log_response(cloud_hero.delete_environment(environment_id))
 
 
-@environments.command('ls', short_help='List all your environments',
+@environment.command('ls', short_help='List all your environments',
                       help='List all your environments')
 def list_environments():
     format_string = ('{node[name]:<25}{environment[location]:<15}'
@@ -339,10 +339,10 @@ def list_environments():
 
 
 # ------------------------------------------------------------------------
-# PROVIDERS
+# PROVIDER COMMANDS
 # ------------------------------------------------------------------------
 @hero.group(help='Cloud providers')
-def providers():
+def provider():
     pass
 
 
@@ -379,7 +379,7 @@ class OptionsBasedCLI(click.MultiCommand):
 
             kwargs[self.field_type] = ctx.info_name
             # Hacks
-            if self.command_type == 'providers':
+            if self.command_type == 'provider':
                 if 'accesskey' in kwargs:
                     kwargs['accessKey'] = kwargs['accesskey']
                     kwargs['secretKey'] = kwargs['secretkey']
@@ -392,7 +392,7 @@ class OptionsBasedCLI(click.MultiCommand):
         return cmd_return
 
 
-@providers.command('add', cls=OptionsBasedCLI, command_type='providers',
+@provider.command('add', cls=OptionsBasedCLI, command_type='provider',
                    field_type='cloud_provider',
                    short_help='Add a new cloud provider',
                    help='Add a new cloud provider')
@@ -401,7 +401,7 @@ def add_cloud_provider(ctx, *args, **kwargs):
     pass
 
 
-@providers.command('ls', short_help='List all configured providers',
+@provider.command('ls', short_help='List all configured providers',
                    help='List all configured providers')
 @click.option('-k', '--show-keys', is_flag=True, help='Show provider keys')
 def list_providers(**kwargs):
@@ -423,7 +423,7 @@ def list_providers(**kwargs):
             print(format_string.format(**provider))
 
 
-@providers.command('rm', short_help='Remove a provider',
+@provider.command('rm', short_help='Remove a provider',
                    help='Remove a provider')
 @click.argument('provider_id', required=False)
 @click.option('-id', '--provider_id', help='Provider ID to be removed')
@@ -452,11 +452,11 @@ def export_docker_environment(**kwargs):
 # INTEGRATIONS
 # ------------------------------------------------------------------------
 @hero.group(help='Add custom integrations')
-def integrations():
+def integration():
     pass
 
 
-@integrations.command('add', cls=OptionsBasedCLI, command_type='integrations',
+@integration.command('add', cls=OptionsBasedCLI, command_type='integration',
                       field_type='type',
                       short_help='Configure a new integration',
                       help='Configure a new integration')
@@ -464,7 +464,7 @@ def integrations():
 def add_integration(ctx, *args, **kwargs):
     pass
 
-@integrations.command('ls', short_help='List all configured integrations',
+@integration.command('ls', short_help='List all configured integrations',
                       help='List all configured integrations')
 def list_integrations():
     string_format = '{name:<15}{type:<20}{meta:<30}{id:<30}'
@@ -476,7 +476,7 @@ def list_integrations():
         print string_format.format(**integration)
 
 
-@integrations.command('rm', short_help='Remove an integration',
+@integration.command('rm', short_help='Remove an integration',
                       help='Remove an integration')
 @click.argument('integration_id', required=False)
 @click.option('-id', '--integration_id', help='Integration ID to be removed')
