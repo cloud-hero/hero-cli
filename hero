@@ -158,7 +158,7 @@ class OrderedHeroCommands(click.Group):
 
     def get_command(self, ctx, cmd_name):
         """
-        For matching just the beginning of commands.
+        For matching multiple commands.
         """
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
@@ -191,7 +191,7 @@ def show_token():
 
 
 # ------------------------------------------------------------------------
-# NODES
+# NODE COMMANDS
 # ------------------------------------------------------------------------
 @hero.group(name='node', help='Node operations')
 def node():
@@ -278,7 +278,7 @@ def remove_node(**kwargs):
 
 
 # ------------------------------------------------------------------------
-# ENVIRONMENT SET-UP
+# ENVIRONMENT COMMANDS
 # ------------------------------------------------------------------------
 @hero.group(name='environment', help='Environment set-up')
 def environment():
@@ -287,7 +287,7 @@ def environment():
 
 @environment.command('create', short_help='Create environment',
                       help='Create environment')
-@click.option('-p', '--provider', prompt=True, help='Select the provider ID')
+@click.option('-p', '--provider_id', prompt=True, help='Select the provider ID')
 @click.option('-l', '--location', prompt=True,
               help='Cloud provider location/region for environment')
 @click.option('-n', '--name', prompt=True, help='Environment name')
@@ -295,7 +295,7 @@ def create_environment(**kwargs):
     data = {
         'region': kwargs['location'],
         'environment': kwargs['name'],
-        'provider_id': kwargs['provider']
+        'provider_id': kwargs['provider_id']
     }
     log_response(cloud_hero.create_environment(data))
 
