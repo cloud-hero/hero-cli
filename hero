@@ -149,11 +149,33 @@ class OrderedHeroCommands(click.Group):
     COMMANDS_ORDER = ['login', 'register', 'providers', 'integrations',
                       'environments', 'nodes', 'docker', 'ssh']
 
+    COMMANDS_ALIASES = {
+        'env': 'environments'
+    }
+
     def list_commands(self, ctx):
         return self.COMMANDS_ORDER
 
+    def get_command(self, ctx, cmd_name):
+        """
+        For matching just the beginning of commands.
+        """
+        rv = click.Group.get_command(self, ctx, cmd_name)
+        if rv is not None:
+            return rv
+        matches = [
+            x for x in self.list_commands(ctx)
+            if cmd_name and
+            (x == cmd_name or self.COMMANDS_ALIASES.get(cmd_name) == x)
+        ]
+        if not matches:
+            return None
+        elif len(matches) == 1:
+            return click.Group.get_command(self, ctx, matches[0])
+        ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
 
-@click.group(cls=OrderedHeroCommands, context_settings=CONTEXT_SETTINGS)
+
+@click.command(cls=OrderedHeroCommands, context_settings=CONTEXT_SETTINGS)
 @click.version_option(version=CLI_VERSION, help='Show the version')
 @click.help_option('-h', '--help', help='Show usage')
 @click.help_option('-v', '--verbose', help='Enable verbose mode')
@@ -171,13 +193,13 @@ def show_token():
 # ------------------------------------------------------------------------
 # NODES
 # ------------------------------------------------------------------------
-@hero.group(help='Nodes operations')
+@hero.group(name='nodes', help='Nodes operations')
 def nodes():
     pass
 
 
 @nodes.command('add', short_help='Add node', help='Add node')
-@click.option('-e', '--env', required=True, prompt=True, help='Environment ID')
+@click.option('-e', '--environment_id', required=True, prompt=True, help='Environment ID')
 @click.option('-k', '--pkg', prompt=True, help='Packages to be installed on the node')
 @click.option('-s', '--size', help='Node size')
 @click.option('-t', '--tags', help='Tags to be applied on the node')
@@ -258,7 +280,7 @@ def remove_node(**kwargs):
 # ------------------------------------------------------------------------
 # ENVIRONMENTS
 # ------------------------------------------------------------------------
-@hero.group(help='Environment set-up')
+@hero.group(name='environments', help='Environment set-up')
 def environments():
     pass
 
