@@ -4,14 +4,6 @@ A simple use case is to create a scalable and high available Docker cluster on t
 
 ![CloudHero Block Architecture](/docs/ch-block.png)
 
-### CloudHero CLI
-
-- [Description](#description)
-- [Install](#install)
-- [Usage examples](#usage-examples)
-  - [Listing your environments](#listing-your-environments)
-  - [Adding a new node](#adding-a-new-node)
-  - [Listing your nodes](#listing-your-nodes)
 
 ## Description
 CloudHero CLI is a open-source application written in python and it is build on top of [CloudHero API](https://docs.cloudhero.io)
