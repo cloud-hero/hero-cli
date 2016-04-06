@@ -65,9 +65,24 @@ $./hero env create -p provider_id -l location -n name
 
 Parameter | Description
 --------- | -----------
-provider_id | The cloud provider that you choose to spin up the nodes. Use ```bash $./hero provider ls ```
-locations | 
-name | 
+provider_id | The cloud provider that you choose to spin up the nodes. Use ```$./hero provider ls ```
+locations | The location where you want to spin up your servers. See below available locations
+name | Name your environment. Eg. Production or Staging
+
+Digital Ocean | Amazon EC2
+------------- | ----------
+Code | Name | Code | Name
+---- | ---- | ---- | ----
+ams2 | Amsterdam 2 | | |
+ams3 | Amsterdam 3 | | |
+fra1 | Frankfurt 1 | |
+lon1 | London 1
+nyc1 | New York 1
+nyc2 | New York 2
+nyc3 | New York 3
+sfo1 | San Francisco 1
+sgp1 | Singapore 1
+tor1 | Toronto 1
 
 ##### Delete
 ```bash
