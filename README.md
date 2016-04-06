@@ -71,18 +71,17 @@ name | Name your environment. Eg. Production or Staging
 
 Digital Ocean | Amazon EC2
 ------------- | ----------
-Code | Name | Code | Name
----- | ---- | ---- | ----
-ams2 | Amsterdam 2 | | |
-ams3 | Amsterdam 3 | | |
-fra1 | Frankfurt 1 | |
-lon1 | London 1
-nyc1 | New York 1
-nyc2 | New York 2
-nyc3 | New York 3
-sfo1 | San Francisco 1
-sgp1 | Singapore 1
-tor1 | Toronto 1
+Code - Name | Code - Name
+ams2 - Amsterdam 2 | us-east-1 - US East (N. Virginia) |
+ams3 - Amsterdam 3 | us-west-2 - US West (Oregon) |
+fra1 - Frankfurt 1 | us-west-1 - US West (N. California) |
+lon1 - London 1 | eu-west-1 - EU (Ireland) |
+nyc1 - New York 1 | eu-central-1 - EU (Frankfurt) |
+nyc2 - New York 2 | ap-southeast-1 - Asia Pacific (Singapore) |
+nyc3 - New York 3 | ap-northeast-1 - Asia Pacific (Tokyo) |
+sfo1 - San Francisco 1 | ap-southeast-2 - Asia Pacific (Sydney) |
+sgp1 - Singapore 1 | ap-northeast-2 - Asia Pacific (Seoul) |
+tor1 - Toronto 1 | sa-east-1 - South America (São Paulo) |
 
 ##### Delete
 ```bash
