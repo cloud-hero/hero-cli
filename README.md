@@ -8,6 +8,7 @@ A simple use case is to create a scalable and high available Docker cluster on t
 ## Description
 CloudHero CLI is a open-source application written in python and it is build on top of [CloudHero API](https://docs.cloudhero.io)
 
+## [Take the crash course here](https://github.com/cloud-hero/hero-cli/blob/master/docs/WEB-EXAMPLE.md)!
 
 ## Install
 ```
@@ -63,11 +64,11 @@ An environment is a group of servers (nodes). You can give them any name, but we
 $./hero env create -p provider_id -l location -n name
 ```
 
-Parameter | Description
---------- | -----------
-provider_id | The cloud provider that you choose to spin up the nodes. Use `$./hero provider ls` to obtain the id
-locations | The location where you want to spin up your servers. See below available locations. (eg. ams2 or us-east-1) 
-name | Name your environment.(eg. Production or Staging)
+| Parameter   | Description
+| ----------- | -----------
+| provider_id | The cloud provider that you choose to spin up the nodes. Use `$./hero provider ls` to obtain the id
+| location    | The location where you want to spin up your servers. See below available locations. (eg. ams2 or us-east-1) 
+| name        | Name your environment.(eg. Production or Staging)
 
 
 ###### Cloud Providers Locations
@@ -149,12 +150,12 @@ Don't take our word for it! The formulas for installing packages are [avaiable f
 This option allows you to horizontally scale any running node, both up and down.
 ####### UP
 ```bash
-$./hero nodes scale up -e env_id --name node_that_you_want_to_scale --count number_of_nodes 
+$./hero nodes scale up -e env_id --name node_to_scale --count number_of_nodes 
 ```
 
 ####### DOWN
 ```bash
-$./hero nodes scale down -e env_id --name node_that_you_want_to_scale --count number_of_nodes 
+$./hero nodes scale down -e env_id --name node_to_scale --count number_of_nodes 
 ```
 
 ##### Delete
@@ -167,6 +168,15 @@ This option allows you to connect securely using SSH to your nodes
 ```bash
 $./hero nodes ssh node_id
 ```
+
+| Parameters             | Description |
+|------------------------|-------------|
+| `-e` env_id            | The environemnt that you created to run servers into. Use `$./hero environment ls` to obtain the id.
+| `--name` node_name     | Specify the name of the node which you would like to create or add more like it. Eg. `--name web1`
+| `-k` pakage            | Specify a comma separated list of packages which you would like to install. Eg. `-k apache,php,mysql`
+| `--count` number       | Here you just tell CloudHero how many nodes. Eg. `--count 4`
+| node_id                | Currently node_id is used when you would like to delete a certain node. Use `$./hero node ls` to obtain the id.
+
 
 ### Docker
 You connect to any Docker Swarm cluster provisioned with CloudHero CLI or API
