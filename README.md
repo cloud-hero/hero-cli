@@ -65,7 +65,7 @@ $./hero env create -p provider_id -l location -n name
 
 Parameter | Description
 --------- | -----------
-provider_id | 
+provider_id | The cloud provider that you choose to spin up the nodes. Use ```bash $./hero provider ls ```
 locations | 
 name | 
 
