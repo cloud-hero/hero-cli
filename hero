@@ -390,7 +390,7 @@ class OptionsBasedCLI(click.MultiCommand):
                     kwargs['accessKey'] = kwargs['accesskey']
                     kwargs['secretKey'] = kwargs['secretkey']
 
-            response = cloud_hero.create_from_options(self.command_type, kwargs)
+            response = cloud_hero.create_from_options(self.endpoint, kwargs)
             log_response(response)
 
         cmd_return = click.Command(name, params=params, callback=callback,
