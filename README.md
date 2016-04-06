@@ -108,17 +108,17 @@ Nodes are servers that CloudHero will provision, install packages and configure 
 $./hero nodes add -e env_id -k package -s size --tags key1:value1,key2:value2 --name mynode
 ```
 
-Digital Ocean 
-:-------------:
-512mb 
-  1gb
-  2gb
-  4gb
-  8gb
- 16gb
- 32gb
- 48gb
- 64gb
+Digital Ocean |
+:-------------: |
+512mb |
+  1gb |
+  2gb |
+  4gb |
+  8gb |
+ 16gb |
+ 32gb |
+ 48gb |
+ 64gb |
  
 AWS EC2 Instance Family |	Current Generation Instance Types
 ----------------------- | ---------------------------------
