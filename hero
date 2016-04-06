@@ -206,16 +206,16 @@ def node():
 @click.option('-n', '--name', prompt=True, help='Node name')
 def add_node(**node_kwargs):
     environment_id = node_kwargs.pop('environment_id')
-    if node_kwargs.get('packages'):
-        node_kwargs['packages'] = node_kwargs['packages'].split(',')
+    if node_kwargs.get('pkg'):
+        node_kwargs['packages'] = node_kwargs['pkg'].split(',')
     tags_to_dict(node_kwargs)
     log_response(cloud_hero.create_node(environment_id, [node_kwargs]))
 
 
 @node.command('scale', help='Scale based node')
 @click.option('-e', '--environment_id', required=True, prompt=True, help='Environment ID')
-@click.option('--name', help='Scale based on an existing node name')
-@click.option('--tags', help='Scale based on an existing node tags')
+@click.option('-n', '--name', help='Scale based on an existing node name')
+@click.option('-t', '--tags', help='Scale based on an existing node tags')
 @click.option('--up', help='Scale UP')
 @click.option('--down', help='Scale DOWN')
 def scale_node(**kwargs):
