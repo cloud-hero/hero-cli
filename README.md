@@ -108,9 +108,9 @@ Nodes are servers that CloudHero will provision, install packages and configure 
 $./hero nodes add -e env_id -k package -s size --tags key1:value1,key2:value2 --name mynode
 ```
 
-Digital Ocean | Amazon EC2
-:-------------: | :----------:
-512mb | 
+Digital Ocean 
+:-------------:
+512mb 
   1gb
   2gb
   4gb
@@ -122,15 +122,11 @@ Digital Ocean | Amazon EC2
  
 AWS EC2 Instance Family |	Current Generation Instance Types
 ----------------------- | ---------------------------------
-General purpose | t2.nano | t2.micro | t2.small | t2.medium | t2.large | m4.large | m4.xlarge | m4.2xlarge | m4.4xlarge | m4.10xlarge | m3.medium | m3.large | m3.xlarge | m3.2xlarge
-Compute optimized
-c4.large | c4.xlarge | c4.2xlarge | c4.4xlarge | c4.8xlarge | c3.large | c3.xlarge | c3.2xlarge | c3.4xlarge | c3.8xlarge
-Memory optimized
-r3.large | r3.xlarge | r3.2xlarge | r3.4xlarge | r3.8xlarge
-Storage optimized
-i2.xlarge | i2.2xlarge | i2.4xlarge | i2.8xlarge | d2.xlarge | d2.2xlarge | d2.4xlarge | d2.8xlarge
-GPU instances
-g2.2xlarge | g2.8xlarge
+General purpose | t2.nano , t2.micro , t2.small , t2.medium , t2.large , m4.large , m4.xlarge , m4.2xlarge , m4.4xlarge , m4.10xlarge , m3.medium , m3.large , m3.xlarge , m3.2xlarge
+Compute optimized | c4.large , c4.xlarge , c4.2xlarge , c4.4xlarge , c4.8xlarge , c3.large , c3.xlarge , c3.2xlarge , c3.4xlarge , c3.8xlarge
+Memory optimized | r3.large , r3.xlarge , r3.2xlarge , r3.4xlarge , r3.8xlarge
+Storage optimized | i2.xlarge , i2.2xlarge , i2.4xlarge , i2.8xlarge , d2.xlarge , d2.2xlarge , d2.4xlarge , d2.8xlarge
+GPU instancesg | 2.2xlarge , g2.8xlarge
 
 
 Below you cand find a list of available packages:
