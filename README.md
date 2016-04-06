@@ -129,15 +129,18 @@ Storage optimized | i2.xlarge , i2.2xlarge , i2.4xlarge , i2.8xlarge , d2.xlarge
 GPU instancesg | 2.2xlarge , g2.8xlarge
 
 
-Below you cand find a list of available packages:
-* docker
-* nginx
-* php
-* mysql
-* memcached
-* redis
-* mongodb
-* glusterfs
+Below you cand find a list of available packages
+Package | 
+:-----: |
+docker |
+apache |
+apache.mod_php5 |
+php |
+mysql |
+memcached |
+redis |
+mongodb |
+glusterfs |
 
 ##### Scale
 This option allows you to horizontally scale any running node, both up and down.
