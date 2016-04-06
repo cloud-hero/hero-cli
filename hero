@@ -240,8 +240,8 @@ def scale_node(**kwargs):
 def list_nodes():
     node_format = ('{node[name]:<25}{environment[name]:<20}'
                    '{node[public_ip]:<17}{node[private_ip]:<17}'
-                   '{node[status]:<10}{node[provider]:<10}{node[packages]:<15}'
-                   '{node[id]:<25}{environment[id]:<25}{node[tags]:<15}')
+                   '{node[status]:<10}{node[provider]:<10}{node[id]:<25}'
+                   '{environment[id]:<25}{node[tags]:<15}{node[packages]:<15}')
     print node_format.format(**PROMPTER_KWARGS)
 
     environments = cloud_hero.list_environments()
