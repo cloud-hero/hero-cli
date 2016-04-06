@@ -267,9 +267,8 @@ def list_nodes():
 
 
 @node.command('rm', short_help='Remove an existing node',
-               help='Remove an existing node')
+              help='Remove an existing node')
 @click.argument('node_id', required=False)
-@click.option('-id', '--node_id', help='Node ID to be removed')
 def remove_node(**kwargs):
     node_id = kwargs.get('node_id')
     if not node_id:
@@ -301,7 +300,7 @@ def create_environment(**kwargs):
 
 
 @environment.command('rm', short_help='Remove an existing environment',
-                      help='Remove an existing environment')
+                     help='Remove an existing environment')
 @click.argument('environment_id', required=False)
 @click.option('-id', '--environment_id', help='Environment ID to be removed')
 def remove_environment(**kwargs):
@@ -430,10 +429,10 @@ def list_providers(**kwargs):
 
 
 @provider.command('rm', short_help='Remove a provider',
-                   help='Remove a provider')
+                  help='Remove a provider')
 @click.argument('provider_id', required=False)
-@click.option('-id', '--provider_id', help='Provider ID to be removed')
 def remove_provider(**kwargs):
+    from ipdb import set_trace; set_trace()
     provider_id = kwargs.get('provider_id')
     if not provider_id:
         provider_id = click.prompt('Provider id')
@@ -483,9 +482,8 @@ def list_integrations():
 
 
 @integration.command('rm', short_help='Remove an integration',
-                      help='Remove an integration')
+                     help='Remove an integration')
 @click.argument('integration_id', required=False)
-@click.option('-id', '--integration_id', help='Integration ID to be removed')
 def remove_integration(**kwargs):
     integration_id = kwargs.get('integration_id')
     if not integration_id:
