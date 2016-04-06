@@ -129,18 +129,23 @@ Storage optimized | i2.xlarge , i2.2xlarge , i2.4xlarge , i2.8xlarge , d2.xlarge
 GPU instancesg | 2.2xlarge , g2.8xlarge
 
 
-Below you cand find a list of available packages
-Package | 
-:-----: |
-docker |
-apache |
-apache.mod_php5 |
-php |
-mysql |
-memcached |
-redis |
-mongodb |
-glusterfs |
+###### Available packages
+
+Package | Description 
+----- | -----
+docker | Docker Cluster with Docker Engine, Consul and Swarm. It can be installed on a single or multiple nodes |
+haproxy | HAProxy
+apache | Apache2 |
+apache.mod_php5 | Apache2 with mod_php5 support
+php | PHP5.5 with default modules
+php.gd | PHP5.5 with default and GD module
+php.mysql | PHP5.5 with default and MYSQL module
+php.apcu | PHP5.5 with default and APCU module
+mysql | MYSQL Server
+memcached | Memcached Server
+redis | Redis Server
+mongodb | MongoDB Server
+glusterfs | GlusterFS Scalable Network Filesystem
 
 ##### Scale
 This option allows you to horizontally scale any running node, both up and down.
