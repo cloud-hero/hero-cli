@@ -348,13 +348,19 @@ def provider():
 
 class OptionsBasedCLI(click.MultiCommand):
 
+    COMMAND_TYPE_TO_ENDPOINT = {
+        'integration': 'integrations',
+        'provider': 'providers'
+    }
+
     def __init__(self, *args, **kwargs):
         self.command_type = kwargs.pop('command_type')
+        self.endpoint = self.COMMAND_TYPE_TO_ENDPOINT[self.command_type]
         self.field_type = kwargs.pop('field_type')
         super(OptionsBasedCLI, self).__init__(*args, **kwargs)
 
     def list_commands(self, ctx):
-        rv = cloud_hero.show_options(self.command_type).keys()
+        rv = cloud_hero.show_options(self.endpoint).keys()
         rv.sort()
         return rv
 
@@ -362,7 +368,7 @@ class OptionsBasedCLI(click.MultiCommand):
         if name not in self.list_commands(ctx):
             ctx.fail('No such command "%s".' % name)
 
-        api_description = cloud_hero.show_options(self.command_type)
+        api_description = cloud_hero.show_options(self.endpoint)
         params = [click.Option((('-n'), ('--name'), ),
                                help='{} name'.format(self.command_type.capitalize()))]
         for mandatory_field in api_description[name]['mandatory_fields']:
