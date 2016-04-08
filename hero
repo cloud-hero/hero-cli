@@ -501,9 +501,8 @@ def ssh_to_vm(**kwargs):
     if not node_details.get(host_name):
         sys.exit('No node with name {} found!'.format(host_name))
 
-    nodes_data = node_details[host_name]
-
     node_index = 0
+    nodes_data = node_details[host_name]
     if len(nodes_data) > 1:
         nodes_format = ('{index:<10}{node[name]:<25}{node[public_ip]:<20}'
                         '{node[private_ip]:<20}{node[packages]:<20}'
@@ -515,8 +514,10 @@ def ssh_to_vm(**kwargs):
             print nodes_format.format(index=index, **node_data)
         user_prompt = 'Pick the node you want to ssh to'.format(nodes_format)
         node_index = click.prompt(user_prompt, default=0)
-    remote_ip = nodes_data[node_index]['node']['public_ip']
-    remote_user = 'root'
+    node = nodes_data[node_index]
+
+    remote_ip = node['node']['public_ip']
+    remote_user = node['provider']['username']
 
     # Get key and write it to the local path
     expanded_file_path = os.path.expanduser(SSH_KEY_PATH)

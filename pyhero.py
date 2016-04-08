@@ -65,6 +65,9 @@ class Client(object):
         response = self._result(self.post_json(ENDPOINTS['login'], data=data))
         return self._get_and_save_token(response)
 
+    def show_providers(self):
+        return self._result(self.options(ENDPOINTS['providers']))
+
     def create_provider(self, data):
         return self._result(self.post_json(ENDPOINTS['providers'],
                                            data=data))
@@ -137,11 +140,12 @@ class Client(object):
                         'environment': {
                             'name': environment['name'],
                             'id': environment['id'],
-                            'location': environment['os_region']
+                            'location': environment['os_region'],
                         },
                         'provider': {
                             'id': environment['provider']['id'],
                             'name': environment['provider']['name'],
+                            'username': environment['provider']['username'],
                             'type': environment['provider']['provider_type']
                         }
                     }
