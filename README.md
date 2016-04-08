@@ -107,6 +107,13 @@ Nodes are servers which CloudHero will provision, install packages on and config
 $./hero nodes add -e env_id -k package -s size --name mynode
 ```
 
+| Parameters             | Description |
+|------------------------|-------------|
+| `-e` env_id            | The environemnt that you created to run servers into. Use `$./hero environment ls` to obtain the id.
+| `-k` pakage            | Specify a comma separated list of packages which you would like to install. Eg. `-k apache,php,mysql`
+| `--name` node_name     | Specify the name of the node which you would like to create or add more like it. Eg. `--name web1`
+
+
 The following sizes are supported for DigitalOcean and Amazon.
 
 | Digital Ocean |
@@ -166,14 +173,6 @@ This option allows you to connect securely using SSH to your nodes
 ```bash
 $./hero nodes ssh node_id
 ```
-
-| Parameters             | Description |
-|------------------------|-------------|
-| `-e` env_id            | The environemnt that you created to run servers into. Use `$./hero environment ls` to obtain the id.
-| `--name` node_name     | Specify the name of the node which you would like to create or add more like it. Eg. `--name web1`
-| `-k` pakage            | Specify a comma separated list of packages which you would like to install. Eg. `-k apache,php,mysql`
-| `--count` number       | Here you just tell CloudHero how many nodes. Eg. `--count 4`
-| node_id                | Currently node_id is used when you would like to delete a certain node. Use `$./hero node ls` to obtain the id.
 
 
 ### Docker
