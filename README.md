@@ -222,12 +222,9 @@ This option allows you to connect securely using SSH to your nodes
 $./hero ssh node_name
 ```
 
-<<<<<<< HEAD
 Option|Description|
 | --------- | ------- |
 |node_name|The node that you choose to connect using SSH. Use `$./hero node ls` to obtain the name.
-=======
->>>>>>> refs/remotes/origin/master
 
 ### Docker
 You connect to any Docker Swarm cluster provisioned with CloudHero CLI or API
