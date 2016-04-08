@@ -138,16 +138,11 @@ $./hero node add -e env_id -k package -s size --name mynode
 | Parameters             | Description |
 |------------------------|-------------|
 | `-e` env_id            | The environemnt that you created to run servers into. Use `$./hero environment ls` to obtain the id.
-<<<<<<< HEAD
 | `-k` package            | Specify a comma separated list of packages which you would like to install. Eg. `-k apache,php,mysql`. See bellow list of available packages.
 | `--name` node_name     | Specify the name of the node which you would like to create or add more like it. Eg. `--name web1`
-
-=======
 | `-k` pakage            | Specify a comma separated list of packages which you would like to install. Eg. `-k apache,php,mysql`
 | `--name` node_name     | Specify the name of the node which you would like to create or add more like it. Eg. `--name web1`
 
-
->>>>>>> refs/remotes/origin/master
 The following sizes are supported for DigitalOcean and Amazon.
 
 | Digital Ocean |
