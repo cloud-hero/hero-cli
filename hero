@@ -146,7 +146,7 @@ def log_response(response):
 # ------------------------------------------------------------------------
 class OrderedHeroCommands(click.Group):
 
-    COMMANDS_ORDER = ['login', 'register', 'provider', 'integration',
+    COMMANDS_ORDER = ['login', 'register', 'provider',
                       'environment', 'node', 'docker', 'ssh']
 
     COMMANDS_ALIASES = {
@@ -432,7 +432,6 @@ def list_providers(**kwargs):
                   help='Remove a provider')
 @click.argument('provider_id', required=False)
 def remove_provider(**kwargs):
-    from ipdb import set_trace; set_trace()
     provider_id = kwargs.get('provider_id')
     if not provider_id:
         provider_id = click.prompt('Provider id')
