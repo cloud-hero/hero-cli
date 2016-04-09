@@ -1,5 +1,5 @@
 PROMPTER_KWARGS = {
-    'node':{
+    'node': {
         'id': 'NODE-ID',
         'name': 'NODE-NAME',
         'public_ip': 'PUBLIC-IP',
@@ -13,6 +13,11 @@ PROMPTER_KWARGS = {
         'id': 'ENVIRONMENT-ID',
         'name': 'ENVIRONMENT-NAME',
         'location': 'LOCATION'
+    },
+    'provider': {
+        'id': 'PROVIDER-ID',
+        'name': 'PROVIDER-NAME',
+        'type': 'PROVIDER-TYPE',
     },
     'application': {
         'id': 'APPLICATION-ID',

@@ -238,9 +238,9 @@ def scale_node(**kwargs):
 @node.command('ls', short_help='List all your nodes',
                help='List all your nodes')
 def list_nodes():
-    node_format = ('{node[name]:<25}{environment[name]:<20}'
-                   '{node[public_ip]:<17}{node[private_ip]:<17}'
-                   '{node[status]:<10}{node[provider]:<10}{node[id]:<25}'
+    node_format = ('{node[name]:<20}{environment[name]:<20}'
+                   '{node[public_ip]:<15}{node[private_ip]:<15}'
+                   '{node[status]:<10}{node[provider]:<15}{node[id]:<25}'
                    '{environment[id]:<25}{node[tags]:<15}{node[packages]:<15}')
     print node_format.format(**PROMPTER_KWARGS)
 
@@ -251,7 +251,7 @@ def list_nodes():
                 'node': {
                     'id': node['id'],
                     'name': node['name'],
-                    'status': 'TBD',
+                    'status': node['status'],
                     'provider': environment['provider']['name'],
                     'public_ip': node.get('public_ip', '-'),
                     'private_ip': node.get('private_ip', '-'),
@@ -261,7 +261,7 @@ def list_nodes():
                 'environment': {
                     'id': environment['id'],
                     'name': environment['name'],
-                }
+                },
             }
             print(node_format.format(**node_data))
 
@@ -315,7 +315,8 @@ def remove_environment(**kwargs):
 def list_environments():
     format_string = ('{node[name]:<25}{environment[location]:<15}'
                      '{nodes_count:<15}{environment[name]:<20}'
-                     '{environment[id]:<30}')
+                     '{environment[id]:<30}'
+                     '{provider[name]:<30}{provider[id]:<30}')
     print format_string.format(**PROMPTER_KWARGS)
 
     environments_list = cloud_hero.list_environments()
@@ -326,7 +327,11 @@ def list_environments():
                 'name': environment['name'],
                 'location': environment['os_region'],
             },
-            'nodes_count': len(environment['nodes'])
+            'nodes_count': len(environment['nodes']),
+            'provider': {
+                'id': environment['provider']['id'],
+                'name': environment['provider']['name']
+            }
         }
         for index, node in enumerate(environment['nodes'] or [{'name': '-'}]):
             if index == 0:
