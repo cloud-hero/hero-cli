@@ -35,10 +35,12 @@ class Client(object):
     def __init__(self, base_url=None, token=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS,
                  exception_callback=None,
-                 clean_up_arguments=False):
+                 clean_up_arguments=False,
+                 user_agent=None):
         self.timeout = timeout
         self.token = token
         self.base_url = base_url
+        self.user_agent = user_agent
         self.exception_callback = exception_callback
         self.clean_up_arguments = clean_up_arguments
         if self.base_url is None:
@@ -231,6 +233,9 @@ class Client(object):
 
         if self.token:
             kwargs['headers']['Authentication-Token'] = self.token
+
+        if self.user_agent:
+            kwargs['headers']['User-Agent'] = self.user_agent
 
         return kwargs
 

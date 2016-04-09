@@ -85,7 +85,8 @@ if not token:
     token = read_token()
 cloud_hero = Client(base_url=CLOUD_HERO_URI, token=token,
                     exception_callback=exception_handler,
-                    clean_up_arguments=True)
+                    clean_up_arguments=True,
+                    user_agent=CLOUD_HERO_USER_AGENT)
 
 
 def verify_one_of(kwargs, *args):
@@ -550,7 +551,6 @@ def ssh_to_vm(**kwargs):
 # ------------------------------------------------------------------------
 @hero.command(short_help='Logout user', help='Logout user')
 def logout():
-    from ipdb import set_trace; set_trace()
     forget_token()
 
     # Remove everything from the CLOUD_HERO_PATH.

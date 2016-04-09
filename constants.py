@@ -5,6 +5,7 @@ CLI_VERSION = '0.1'
 # https://docs.cloudhero.io
 CLOUD_HERO_URI = 'http://d.cloudhero.io'
 CLOUD_HERO_TOKEN_ENV_VARIABLE = 'CLOUD_HERO_TOKEN'
+CLOUD_HERO_USER_AGENT = 'cloudhero-cli'
 
 # Local directory-related constants.
 CLOUD_HERO_DIR = '~/.herorc/'
