@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import shutil
 import sys
 import paramiko
 import traceback
@@ -24,7 +25,7 @@ def persist_token(user_token):
     Set token environment variable.
     """
     os.environ['CLOUD_HERO_TOKEN'] = user_token
-    write(user_token)
+    write_token(user_token)
 
 
 def forget_token():
@@ -33,10 +34,9 @@ def forget_token():
     """
     env_token = os.environ.get(CLOUD_HERO_TOKEN_ENV_VARIABLE, None)
     del env_token
-    delete_token()
 
 
-def write(content):
+def write_token(content):
     """
     Write token to config file.
     """
@@ -55,17 +55,6 @@ def read_token():
     with open(config_file_path, "r") as file_handler:
         token_from_file = file_handler.read()
         return token_from_file.strip().replace('\n', '').replace('\t', '')
-
-
-def delete_token():
-    """
-    Remove token.
-    """
-    config_file_path = os.path.expanduser(CLOUD_HERO_TOKEN)
-    try:
-        os.remove(config_file_path)
-    except OSError:
-        print('You are already logged out!')
 
 
 def exception_handler(api_exception):
@@ -525,7 +514,7 @@ def ssh_to_vm(**kwargs):
     remote_user = node['provider']['username']
 
     # Get key and write it to the local path
-    expanded_file_path = os.path.expanduser(SSH_KEY_PATH)
+    expanded_file_path = os.path.expanduser(CLOUD_HERO_SSH_KEY)
     if not os.path.exists(expanded_file_path):
         ssh_key_content = cloud_hero.list_key()['content']
         write_to_file(ssh_key_content, expanded_file_path)
@@ -561,7 +550,17 @@ def ssh_to_vm(**kwargs):
 # ------------------------------------------------------------------------
 @hero.command(short_help='Logout user', help='Logout user')
 def logout():
+    from ipdb import set_trace; set_trace()
     forget_token()
+
+    # Remove everything from the CLOUD_HERO_PATH.
+    cloud_hero_path = os.path.expanduser(CLOUD_HERO_DIR)
+    try:
+        shutil.rmtree(cloud_hero_path)
+    except OSError as os_exception:
+        print(os_exception.strerror)
+
+    print('Logout successful!')
 
 
 @hero.command(short_help='Login user', help='Login user')
