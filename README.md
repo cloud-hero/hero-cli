@@ -85,9 +85,9 @@ $./hero provider ls
 ### Environment
 An environment is a group of servers (nodes). You can give them any name, but we usualy call them production, staging, development.
 
-##### Create
+##### Add
 ```bash
-$./hero env create -p provider_id -l location -n name
+$./hero env add -p provider_id -l location -n name
 ```
 
 | Parameter   | Description

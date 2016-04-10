@@ -27,7 +27,7 @@ Step 4.
 ###### Create a new environment where the nodes will be launched.
 In this step we will select which cloud provider we want to work with, which location to use and the name of our environment
 ```
-$ ./hero environment create -p 56fe7d5910d39669c06a5276 -l eu-west-1 -n bigsite-prod
+$ ./hero environment add -p 56fe7d5910d39669c06a5276 -l eu-west-1 -n bigsite-prod
 ```
 Step 5:
 -------
