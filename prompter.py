@@ -26,3 +26,6 @@ PROMPTER_KWARGS = {
     'index': 'OPTION',
     'nodes_count': 'NODES-COUNT'
 }
+
+NOT_AVAILABLE = 'N/A'
+NOTHING_TO_SHOW = '-'

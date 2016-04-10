@@ -8,11 +8,8 @@ from utils import remove_none_dict_values, cache_to_file, invalidate_cache
 
 DEFAULT_CLIENT_VERSION = '1.0'
 DEFAULT_TIMEOUT_SECONDS = 60
-CLIENT_CACHE_TTL = 60 * 5
+CLIENT_CACHE_TTL = 60
 CLIENT_CACHE_OPTIONS_TTL = 60 * 60
-
-class NotFound(Exception): pass
-class APIError(Exception): pass
 
 
 ENDPOINTS = {
@@ -98,7 +95,7 @@ class Client(object):
                                              item_id))
 
     @invalidate_cache(CLOUD_HERO_CACHE_ENVIRONMENTS, CLOUD_HERO_CACHE_NODES)
-    def create_environment(self, data):
+    def add_environment(self, data):
         return self._result(self.post_json(ENDPOINTS['environments'],
                                            data=data))
 
@@ -129,8 +126,8 @@ class Client(object):
                         'node': {
                             'id': node['id'],
                             'name': node['name'],
-                            'private_ip': node['private_ip'],
-                            'public_ip': node['public_ip'],
+                            'private_ip': node.get('private_ip'),
+                            'public_ip': node.get('public_ip'),
                             'packages': node['packages'],
                             'size': node['size'],
                             'tags': node['tags']

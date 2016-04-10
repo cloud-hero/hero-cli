@@ -14,3 +14,6 @@ CLOUD_HERO_TOKEN = CLOUD_HERO_DIR + 'token'
 CLOUD_HERO_CACHE_NODES = CLOUD_HERO_DIR + 'cache/nodes'
 CLOUD_HERO_CACHE_ENVIRONMENTS = CLOUD_HERO_DIR + 'cache/enviornments'
 CLOUD_HERO_CACHE_OPTIONS = CLOUD_HERO_DIR + 'cache/options'
+
+# Exceptions.
+class NotFound(Exception): pass

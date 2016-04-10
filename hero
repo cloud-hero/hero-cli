@@ -13,7 +13,7 @@ import requests
 from constants import *
 from interactive import interactive_shell
 from pyhero import Client
-from prompter import PROMPTER_KWARGS
+from prompter import *
 from utils import (write_to_file, set_keys_to_empty_values,
                    get_docker_ip_for_environment)
 
@@ -102,7 +102,7 @@ def verify_one_of(kwargs, *args):
 
 def tags_for_pprint(tags):
     if not tags:
-        return '-'
+        return NOTHING_TO_SHOW
     return ', '.join(['{}:{}'.format(key, value)
                       for key, value in tags.items()])
 
@@ -241,10 +241,10 @@ def list_nodes():
                 'node': {
                     'id': node['id'],
                     'name': node['name'],
-                    'status': node['status'],
+                    'status': node.get('status', NOT_AVAILABLE),
                     'provider': environment['provider']['name'],
-                    'public_ip': node.get('public_ip', '-'),
-                    'private_ip': node.get('private_ip', '-'),
+                    'public_ip': node.get('public_ip', NOT_AVAILABLE),
+                    'private_ip': node.get('private_ip', NOT_AVAILABLE),
                     'packages': ','.join(node['packages']),
                     'tags': tags_for_pprint(node['tags'])
                 },
@@ -274,19 +274,18 @@ def environment():
     pass
 
 
-@environment.command('create', short_help='Create environment',
-                      help='Create environment')
+@environment.command('add', short_help='Add environment', help='Add environment')
 @click.option('-p', '--provider_id', prompt=True, help='Select the provider ID')
 @click.option('-l', '--location', prompt=True,
               help='Cloud provider location/region for environment')
 @click.option('-n', '--name', prompt=True, help='Environment name')
-def create_environment(**kwargs):
+def add_environment(**kwargs):
     data = {
         'region': kwargs['location'],
         'environment': kwargs['name'],
         'provider_id': kwargs['provider_id']
     }
-    log_response(cloud_hero.create_environment(data))
+    log_response(cloud_hero.add_environment(data))
 
 
 @environment.command('rm', short_help='Remove an existing environment',
@@ -323,7 +322,8 @@ def list_environments():
                 'name': environment['provider']['name']
             }
         }
-        for index, node in enumerate(environment['nodes'] or [{'name': '-'}]):
+        nodes_list = environment['nodes'] or [{'name': NOTHING_TO_SHOW}]
+        for index, node in enumerate(nodes_list):
             if index == 0:
                 print format_string.format(node=node, **environment_data)
                 continue
@@ -441,7 +441,14 @@ def remove_provider(**kwargs):
 def export_docker_environment(**kwargs):
     environment = kwargs['environment']
     node_details = cloud_hero.get_all_details()
-    docker_ip = get_docker_ip_for_environment(node_details, environment)
+    try:
+        docker_ip = get_docker_ip_for_environment(node_details, environment)
+    except NotFound as exception:
+        sys.exit(exception.message)
+    if docker_ip is None:
+        sys.exit('Node is still being created, could not find the IP to '
+                 'connect to')
+
     print('export DOCKER_HOST=tcp://{}:4000'.format(docker_ip))
     print('# Run this command to configure your shell:\n'
           '# eval "$(hero docker {})"'.format(environment))
