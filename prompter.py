@@ -1,5 +1,5 @@
 PROMPTER_KWARGS = {
-    'node':{
+    'node': {
         'id': 'NODE-ID',
         'name': 'NODE-NAME',
         'public_ip': 'PUBLIC-IP',
@@ -14,6 +14,11 @@ PROMPTER_KWARGS = {
         'name': 'ENVIRONMENT-NAME',
         'location': 'LOCATION'
     },
+    'provider': {
+        'id': 'PROVIDER-ID',
+        'name': 'PROVIDER-NAME',
+        'type': 'PROVIDER-TYPE',
+    },
     'application': {
         'id': 'APPLICATION-ID',
         'name': 'APPLICATION-NAME'
@@ -21,3 +26,6 @@ PROMPTER_KWARGS = {
     'index': 'OPTION',
     'nodes_count': 'NODES-COUNT'
 }
+
+NOT_AVAILABLE = 'N/A'
+NOTHING_TO_SHOW = '-'

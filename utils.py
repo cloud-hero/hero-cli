@@ -4,7 +4,7 @@ import json
 import os
 import time
 
-from constants import CLOUD_HERO_CACHE_OPTIONS
+from constants import CLOUD_HERO_CACHE_OPTIONS, NotFound
 
 
 def write_to_file(content, file_path, is_json=False):
@@ -114,8 +114,13 @@ def set_keys_to_empty_values(obj):
 
 
 def get_docker_ip_for_environment(node_details, environment_id):
+    environment_found = False
     for node, nodes_data in node_details.items():
         for node_data in nodes_data:
-            if (node_data['environment']['id'] == environment_id and
-                    node_data['node']['public_ip']):
-                return node_data['node']['public_ip']
+            if node_data['environment']['id'] == environment_id:
+                environment_found = True
+                if node_data['node'].get('public_ip'):
+                    return node_data['node']['public_ip']
+
+    if environment_found is False:
+        raise NotFound('Environment {} not found!'.format(environment_id))

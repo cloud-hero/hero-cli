@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import shutil
 import sys
 import paramiko
 import traceback
@@ -12,7 +13,7 @@ import requests
 from constants import *
 from interactive import interactive_shell
 from pyhero import Client
-from prompter import PROMPTER_KWARGS
+from prompter import *
 from utils import (write_to_file, set_keys_to_empty_values,
                    get_docker_ip_for_environment)
 
@@ -24,7 +25,7 @@ def persist_token(user_token):
     Set token environment variable.
     """
     os.environ['CLOUD_HERO_TOKEN'] = user_token
-    write(user_token)
+    write_token(user_token)
 
 
 def forget_token():
@@ -33,10 +34,9 @@ def forget_token():
     """
     env_token = os.environ.get(CLOUD_HERO_TOKEN_ENV_VARIABLE, None)
     del env_token
-    delete_token()
 
 
-def write(content):
+def write_token(content):
     """
     Write token to config file.
     """
@@ -55,17 +55,6 @@ def read_token():
     with open(config_file_path, "r") as file_handler:
         token_from_file = file_handler.read()
         return token_from_file.strip().replace('\n', '').replace('\t', '')
-
-
-def delete_token():
-    """
-    Remove token.
-    """
-    config_file_path = os.path.expanduser(CLOUD_HERO_TOKEN)
-    try:
-        os.remove(config_file_path)
-    except OSError:
-        print('You are already logged out!')
 
 
 def exception_handler(api_exception):
@@ -96,7 +85,8 @@ if not token:
     token = read_token()
 cloud_hero = Client(base_url=CLOUD_HERO_URI, token=token,
                     exception_callback=exception_handler,
-                    clean_up_arguments=True)
+                    clean_up_arguments=True,
+                    user_agent=CLOUD_HERO_USER_AGENT)
 
 
 def verify_one_of(kwargs, *args):
@@ -112,7 +102,7 @@ def verify_one_of(kwargs, *args):
 
 def tags_for_pprint(tags):
     if not tags:
-        return '-'
+        return NOTHING_TO_SHOW
     return ', '.join(['{}:{}'.format(key, value)
                       for key, value in tags.items()])
 
@@ -146,7 +136,7 @@ def log_response(response):
 # ------------------------------------------------------------------------
 class OrderedHeroCommands(click.Group):
 
-    COMMANDS_ORDER = ['login', 'register', 'provider',
+    COMMANDS_ORDER = ['login', 'register', 'provider', 'integration',
                       'environment', 'node', 'docker', 'ssh']
 
     COMMANDS_ALIASES = {
@@ -238,9 +228,9 @@ def scale_node(**kwargs):
 @node.command('ls', short_help='List all your nodes',
                help='List all your nodes')
 def list_nodes():
-    node_format = ('{node[name]:<25}{environment[name]:<20}'
-                   '{node[public_ip]:<17}{node[private_ip]:<17}'
-                   '{node[status]:<10}{node[provider]:<10}{node[id]:<25}'
+    node_format = ('{node[name]:<20}{environment[name]:<20}'
+                   '{node[public_ip]:<15}{node[private_ip]:<15}'
+                   '{node[status]:<10}{node[provider]:<15}{node[id]:<25}'
                    '{environment[id]:<25}{node[tags]:<15}{node[packages]:<15}')
     print node_format.format(**PROMPTER_KWARGS)
 
@@ -251,17 +241,17 @@ def list_nodes():
                 'node': {
                     'id': node['id'],
                     'name': node['name'],
-                    'status': 'TBD',
+                    'status': node.get('status', NOT_AVAILABLE),
                     'provider': environment['provider']['name'],
-                    'public_ip': node.get('public_ip', '-'),
-                    'private_ip': node.get('private_ip', '-'),
+                    'public_ip': node.get('public_ip', NOT_AVAILABLE),
+                    'private_ip': node.get('private_ip', NOT_AVAILABLE),
                     'packages': ','.join(node['packages']),
                     'tags': tags_for_pprint(node['tags'])
                 },
                 'environment': {
                     'id': environment['id'],
                     'name': environment['name'],
-                }
+                },
             }
             print(node_format.format(**node_data))
 
@@ -284,19 +274,18 @@ def environment():
     pass
 
 
-@environment.command('create', short_help='Create environment',
-                      help='Create environment')
+@environment.command('add', short_help='Add environment', help='Add environment')
 @click.option('-p', '--provider_id', prompt=True, help='Select the provider ID')
 @click.option('-l', '--location', prompt=True,
               help='Cloud provider location/region for environment')
 @click.option('-n', '--name', prompt=True, help='Environment name')
-def create_environment(**kwargs):
+def add_environment(**kwargs):
     data = {
         'region': kwargs['location'],
         'environment': kwargs['name'],
         'provider_id': kwargs['provider_id']
     }
-    log_response(cloud_hero.create_environment(data))
+    log_response(cloud_hero.add_environment(data))
 
 
 @environment.command('rm', short_help='Remove an existing environment',
@@ -315,7 +304,8 @@ def remove_environment(**kwargs):
 def list_environments():
     format_string = ('{node[name]:<25}{environment[location]:<15}'
                      '{nodes_count:<15}{environment[name]:<20}'
-                     '{environment[id]:<30}')
+                     '{environment[id]:<30}'
+                     '{provider[name]:<30}{provider[id]:<30}')
     print format_string.format(**PROMPTER_KWARGS)
 
     environments_list = cloud_hero.list_environments()
@@ -326,9 +316,14 @@ def list_environments():
                 'name': environment['name'],
                 'location': environment['os_region'],
             },
-            'nodes_count': len(environment['nodes'])
+            'nodes_count': len(environment['nodes']),
+            'provider': {
+                'id': environment['provider']['id'],
+                'name': environment['provider']['name']
+            }
         }
-        for index, node in enumerate(environment['nodes'] or [{'name': '-'}]):
+        nodes_list = environment['nodes'] or [{'name': NOTHING_TO_SHOW}]
+        for index, node in enumerate(nodes_list):
             if index == 0:
                 print format_string.format(node=node, **environment_data)
                 continue
@@ -446,7 +441,14 @@ def remove_provider(**kwargs):
 def export_docker_environment(**kwargs):
     environment = kwargs['environment']
     node_details = cloud_hero.get_all_details()
-    docker_ip = get_docker_ip_for_environment(node_details, environment)
+    try:
+        docker_ip = get_docker_ip_for_environment(node_details, environment)
+    except NotFound as exception:
+        sys.exit(exception.message)
+    if docker_ip is None:
+        sys.exit('Node is still being created, could not find the IP to '
+                 'connect to')
+
     print('export DOCKER_HOST=tcp://{}:4000'.format(docker_ip))
     print('# Run this command to configure your shell:\n'
           '# eval "$(hero docker {})"'.format(environment))
@@ -520,7 +522,7 @@ def ssh_to_vm(**kwargs):
     remote_user = node['provider']['username']
 
     # Get key and write it to the local path
-    expanded_file_path = os.path.expanduser(SSH_KEY_PATH)
+    expanded_file_path = os.path.expanduser(CLOUD_HERO_SSH_KEY)
     if not os.path.exists(expanded_file_path):
         ssh_key_content = cloud_hero.list_key()['content']
         write_to_file(ssh_key_content, expanded_file_path)
@@ -557,6 +559,15 @@ def ssh_to_vm(**kwargs):
 @hero.command(short_help='Logout user', help='Logout user')
 def logout():
     forget_token()
+
+    # Remove everything from the CLOUD_HERO_PATH.
+    cloud_hero_path = os.path.expanduser(CLOUD_HERO_DIR)
+    try:
+        shutil.rmtree(cloud_hero_path)
+    except OSError as os_exception:
+        print(os_exception.strerror)
+
+    print('Logout successful!')
 
 
 @hero.command(short_help='Login user', help='Login user')

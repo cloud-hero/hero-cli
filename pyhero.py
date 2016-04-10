@@ -8,11 +8,8 @@ from utils import remove_none_dict_values, cache_to_file, invalidate_cache
 
 DEFAULT_CLIENT_VERSION = '1.0'
 DEFAULT_TIMEOUT_SECONDS = 60
-CLIENT_CACHE_TTL = 60 * 5
+CLIENT_CACHE_TTL = 60
 CLIENT_CACHE_OPTIONS_TTL = 60 * 60
-
-class NotFound(Exception): pass
-class APIError(Exception): pass
 
 
 ENDPOINTS = {
@@ -35,10 +32,12 @@ class Client(object):
     def __init__(self, base_url=None, token=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS,
                  exception_callback=None,
-                 clean_up_arguments=False):
+                 clean_up_arguments=False,
+                 user_agent=None):
         self.timeout = timeout
         self.token = token
         self.base_url = base_url
+        self.user_agent = user_agent
         self.exception_callback = exception_callback
         self.clean_up_arguments = clean_up_arguments
         if self.base_url is None:
@@ -96,7 +95,7 @@ class Client(object):
                                              item_id))
 
     @invalidate_cache(CLOUD_HERO_CACHE_ENVIRONMENTS, CLOUD_HERO_CACHE_NODES)
-    def create_environment(self, data):
+    def add_environment(self, data):
         return self._result(self.post_json(ENDPOINTS['environments'],
                                            data=data))
 
@@ -127,8 +126,8 @@ class Client(object):
                         'node': {
                             'id': node['id'],
                             'name': node['name'],
-                            'private_ip': node['private_ip'],
-                            'public_ip': node['public_ip'],
+                            'private_ip': node.get('private_ip'),
+                            'public_ip': node.get('public_ip'),
                             'packages': node['packages'],
                             'size': node['size'],
                             'tags': node['tags']
@@ -231,6 +230,9 @@ class Client(object):
 
         if self.token:
             kwargs['headers']['Authentication-Token'] = self.token
+
+        if self.user_agent:
+            kwargs['headers']['User-Agent'] = self.user_agent
 
         return kwargs
 
