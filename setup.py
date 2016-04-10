@@ -10,7 +10,7 @@ LONG_DESCRIPTION = ('Use hero to create any type of server environments or '
                     'private cloud providers.')
 
 required_packages = [str(package.req)
-                     for package in parse_requirements('requirements.txt',
+                     for package in parse_requirements('hero/requirements.txt',
                                                        session=False)]
 
 
