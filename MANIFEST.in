@@ -1,0 +1,6 @@
+include setup.cfg
+include setup.py
+include README.md
+include LICENSE
+graft hero
+recursive-exclude hero *.pyc
