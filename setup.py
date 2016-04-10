@@ -1,9 +1,17 @@
-from constants import CLI_VERSION
 from distutils.core import setup
+from pip.req import parse_requirements
 
+from constants import CLI_VERSION
+
+DOWNLOAD_URL = ('https://github.com/cloud-hero/hero-cli/tarball/{version}'
+                .format(version=CLI_VERSION))
 LONG_DESCRIPTION = ('Use hero to create any type of server environments or '
                     'a scalable container service on top of major public or '
                     'private cloud providers.')
+
+required_packages = [str(package.req)
+                     for package in parse_requirements('requirements.txt',
+                                                       session=False)]
 
 
 setup(
@@ -19,9 +27,10 @@ setup(
     author_email='founders@cloudhero.io',
     license='GNU General Public License',
 
-    install_requires=['paramiko==1.15.2', 'requests==2.9.1', 'click==6.4'],
-    download_url='https://github.com/cloud-hero/hero-cli/tarball/0.2',
-    keywords=['cloud', 'aws', 'digital ocean', ''],
+    install_requires=required_packages,
+    download_url=DOWNLOAD_URL,
+    keywords=['CloudHero CLI', 'software-defined infrastructure',
+              'Server set-up'],
 
     # Entire list here:
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -36,6 +45,5 @@ setup(
         'Programming Language :: Python',
         'Topic :: System :: Installation/Setup',
         'Topic :: System :: Shells'
-        'Topic :: Utilities'
     ],
 )
