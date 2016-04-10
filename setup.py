@@ -1,7 +1,7 @@
 from distutils.core import setup
 from pip.req import parse_requirements
 
-from constants import CLI_VERSION
+from hero.constants import CLI_VERSION
 
 DOWNLOAD_URL = ('https://github.com/cloud-hero/hero-cli/tarball/{version}'
                 .format(version=CLI_VERSION))
@@ -31,6 +31,10 @@ setup(
     download_url=DOWNLOAD_URL,
     keywords=['CloudHero CLI', 'software-defined infrastructure',
               'Server set-up'],
+    entry_points={
+        'console_scripts':
+            ['hero = hero.hero:hero_cli']
+    },
 
     # Entire list here:
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers

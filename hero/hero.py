@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import os
 import shutil
 import sys
@@ -169,13 +167,13 @@ class OrderedHeroCommands(click.Group):
 @click.version_option(version=CLI_VERSION, help='Show the version')
 @click.help_option('-h', '--help', help='Show usage')
 @click.help_option('-v', '--verbose', help='Enable verbose mode')
-def hero(**kwargs):
+def hero_cli(**kwargs):
     if kwargs.get('verbose'):
         global VERBOSE
         VERBOSE = True
 
 
-@hero.command('token', help='See your token')
+@hero_cli.command('token', help='See your token')
 def show_token():
     print token
 
@@ -183,7 +181,7 @@ def show_token():
 # ------------------------------------------------------------------------
 # NODE COMMANDS
 # ------------------------------------------------------------------------
-@hero.group(name='node', help='Node operations')
+@hero_cli.group(name='node', help='Node operations')
 def node():
     pass
 
@@ -269,7 +267,7 @@ def remove_node(**kwargs):
 # ------------------------------------------------------------------------
 # ENVIRONMENT COMMANDS
 # ------------------------------------------------------------------------
-@hero.group(name='environment', help='Environment set-up')
+@hero_cli.group(name='environment', help='Environment set-up')
 def environment():
     pass
 
@@ -335,7 +333,7 @@ def list_environments():
 # ------------------------------------------------------------------------
 # PROVIDER COMMANDS
 # ------------------------------------------------------------------------
-@hero.group(help='Cloud providers')
+@hero_cli.group(help='Cloud providers')
 def provider():
     pass
 
@@ -436,7 +434,7 @@ def remove_provider(**kwargs):
 # ------------------------------------------------------------------------
 # DOCKER
 # ------------------------------------------------------------------------
-@hero.command('docker', help='Handle your docker cluster')
+@hero_cli.command('docker', help='Handle your docker cluster')
 @click.argument('environment', required=True)
 def export_docker_environment(**kwargs):
     environment = kwargs['environment']
@@ -457,7 +455,7 @@ def export_docker_environment(**kwargs):
 # ------------------------------------------------------------------------
 # INTEGRATIONS
 # ------------------------------------------------------------------------
-@hero.group(help='Add custom integrations')
+@hero_cli.group(help='Add custom integrations')
 def integration():
     pass
 
@@ -495,7 +493,7 @@ def remove_integration(**kwargs):
 # ------------------------------------------------------------------------
 # SSH
 # ------------------------------------------------------------------------
-@hero.command('ssh', help='SSH to virtual machine')
+@hero_cli.command('ssh', help='SSH to virtual machine')
 @click.argument('host', required=True)
 def ssh_to_vm(**kwargs):
     host_name = kwargs['host']
@@ -556,7 +554,7 @@ def ssh_to_vm(**kwargs):
 # ------------------------------------------------------------------------
 # AUTH-RELATED
 # ------------------------------------------------------------------------
-@hero.command(short_help='Logout user', help='Logout user')
+@hero_cli.command(short_help='Logout user', help='Logout user')
 def logout():
     forget_token()
 
@@ -570,7 +568,7 @@ def logout():
     print('Logout successful!')
 
 
-@hero.command(short_help='Login user', help='Login user')
+@hero_cli.command(short_help='Login user', help='Login user')
 @click.option('-e', '--email', prompt=True, help='Email')
 @click.option('-p', '--password', prompt=True, hide_input=True, help='Password')
 def login(**kwargs):
@@ -578,7 +576,7 @@ def login(**kwargs):
     print('Let\'s launch some servers!')
 
 
-@hero.command(short_help='Create account', help='Create account')
+@hero_cli.command(short_help='Create account', help='Create account')
 @click.option('-e', '--email', prompt=True, help='Email')
 @click.option('-p', '--password', prompt=True, confirmation_prompt=True,
               hide_input=True, help='Password')
@@ -604,4 +602,4 @@ def register(**kwargs):
 
 
 if __name__ == '__main__':
-    hero()
+    hero_cli()
