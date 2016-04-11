@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import os
 import shutil
 import sys
@@ -8,12 +10,12 @@ import click
 from click.exceptions import ClickException
 import requests
 
-from constants import *
-from interactive import interactive_shell
-from pyhero import Client
-from prompter import *
-from utils import (write_to_file, set_keys_to_empty_values,
-                   get_docker_ip_for_environment)
+from lib.constants import *
+from lib.interactive import interactive_shell
+from lib.pyhero import Client
+from lib.prompter import *
+from lib.utils import (write_to_file, set_keys_to_empty_values,
+                       get_docker_ip_for_environment)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 

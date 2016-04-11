@@ -1,6 +1,7 @@
 include setup.cfg
 include setup.py
 include README.md
+include requirements.txt
 include LICENSE
-graft hero
-recursive-exclude hero *.pyc
+graft lib
+recursive-exclude lib *.pyc
