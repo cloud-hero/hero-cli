@@ -9,12 +9,11 @@ CloudHero CLI is a open-source application written in python and it is build on 
 ## [Take the crash course here](https://github.com/cloud-hero/hero-cli/blob/master/docs/WEB-EXAMPLE.md)!
 
 ## Install
+
 ```
-git clone https://github.com/cloud-hero/hero-cli.git  
-cd hero-cli
-pip install -r requirements.txt
-./hero
+pip install hero
 ```
+
 
 ## Account Registration
 Once installed you need to create a account. If you already have an active CloudHero account you can skip this step.
