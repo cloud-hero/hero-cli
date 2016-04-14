@@ -61,6 +61,9 @@ $./hero provider add digital_ocean -a DO_Access_Token --name my_dev_cloud
 $./hero provider add ec2 -a access_key -s secret_key --name my_prod_cloud
 ```
 
+We prepared for you [the minimum required IAM policy](https://github.com/cloud-hero/hero-cli/blob/master/docs/AWS-policy.md) for CloudHero.
+In that example you can see that CloudHero is only allowed to work in Irland and it only needs just a few permissions.
+
 |Parameter|Description|
 | --------- | ------- |
 |access_key | A valid AWS EC2 access key
