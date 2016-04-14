@@ -5,9 +5,10 @@ from lib.constants import CLI_VERSION
 
 DOWNLOAD_URL = ('https://github.com/cloud-hero/hero-cli/tarball/{version}'
                 .format(version=CLI_VERSION))
-LONG_DESCRIPTION = ('Use hero to create any type of server environments or '
-                    'a scalable container service on top of major public or '
-                    'private cloud providers.')
+LONG_DESCRIPTION = ('Use hero to create any type of server environments '
+                    'on top of major public or private cloud providers. '
+                    'An example of such a server environment is a scalable '
+                    'container service.')
 
 required_packages = [str(package.req)
                      for package in parse_requirements('requirements.txt',

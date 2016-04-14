@@ -137,7 +137,7 @@ def log_response(response):
 class OrderedHeroCommands(click.Group):
 
     COMMANDS_ORDER = ['login', 'register', 'provider', 'integration',
-                      'environment', 'node', 'docker', 'ssh']
+                      'environment', 'node', 'docker', 'ssh', 'logout']
 
     COMMANDS_ALIASES = {
         'env': 'environment'
