@@ -137,7 +137,8 @@ def log_response(response):
 class OrderedHeroCommands(click.Group):
 
     COMMANDS_ORDER = ['login', 'register', 'provider', 'integration',
-                      'environment', 'node', 'docker', 'ssh', 'logout']
+                      'environment', 'node', 'docker', 'ssh', 'logout',
+                      'feedback']
 
     COMMANDS_ALIASES = {
         'env': 'environment'
@@ -490,6 +491,20 @@ def remove_integration(**kwargs):
     if not integration_id:
         integration_id = click.prompt('Integration id')
     cloud_hero.delete_integration(integration_id)
+
+
+# ------------------------------------------------------------------------
+# FEEDBACK
+# ------------------------------------------------------------------------
+@hero_cli.command('feedback', help='Send feedback to CloudHero team')
+def send_feedback():
+    user_prompt = 'Leave your thoughts for the CloudHero team:\n'
+    feedback = click.prompt(user_prompt, prompt_suffix='')
+    feedback_data = {
+        'feedback': feedback,
+        'user': token
+    }
+    cloud_hero.send_feedback(feedback_data)
 
 
 # ------------------------------------------------------------------------

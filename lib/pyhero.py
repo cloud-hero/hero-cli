@@ -24,6 +24,7 @@ ENDPOINTS = {
     'environments': '/environments',
     'applications': '/applications',
     'swarm': '/swarm',
+    'feedback': '/feedback'
 }
 
 
@@ -166,6 +167,10 @@ class Client(object):
     def scale_down_node(self, environment_id, data):
         result = self.delete_json(self._scale_endpoint(environment_id), data)
         return self._result(result)
+
+    def send_feedback(self, data):
+        return self._result(self.post_json(ENDPOINTS['feedback'],
+                                           data=data))
 
     @cache_to_file(CLOUD_HERO_CACHE_OPTIONS, ttl=CLIENT_CACHE_OPTIONS_TTL)
     def show_options(self, endpoint):

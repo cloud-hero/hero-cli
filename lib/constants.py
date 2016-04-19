@@ -3,7 +3,7 @@ CLI_VERSION = '0.3'
 
 # API-related constants.
 # https://docs.cloudhero.io
-CLOUD_HERO_URI = 'http://s.cloudhero.io'
+CLOUD_HERO_URI = 'http://d.cloudhero.io'
 CLOUD_HERO_TOKEN_ENV_VARIABLE = 'CLOUD_HERO_TOKEN'
 CLOUD_HERO_USER_AGENT = 'cloudhero-cli'
 
