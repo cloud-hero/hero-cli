@@ -2,9 +2,10 @@ import errno
 import functools
 import json
 import os
+import sys
 import time
 
-from constants import CLOUD_HERO_CACHE_OPTIONS, NotFound
+from lib.constants import CLOUD_HERO_CACHE_OPTIONS, CLOUD_HERO_HISTORY, NotFound
 
 
 def write_to_file(content, file_path, is_json=False):
@@ -68,14 +69,6 @@ def invalidate_cache(*file_paths):
     def wrap(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            for file_path in file_paths:
-                expanded_file_path = os.path.expanduser(file_path)
-                try:
-                    os.remove(expanded_file_path)
-                except OSError as exc:
-                    if exc.errno == errno.ENOENT:
-                        continue
-                    raise
             return func(*args, **kwargs)
         return wrapper
     return wrap
@@ -124,3 +117,20 @@ def get_docker_ip_for_environment(node_details, environment_id):
 
     if environment_found is False:
         raise NotFound('Environment {} not found!'.format(environment_id))
+
+
+def update_history(cloud_hero):
+    user_command = ' '.join(sys.argv)
+    timestamp = int(time.time())
+    content = read_from_file(CLOUD_HERO_HISTORY, is_json=True)
+
+    command_history = (user_command, timestamp)
+    if not content:
+        content = [command_history]
+    else:
+        content.append(command_history)
+        if len(content) > 10:
+            cloud_hero.send_history(content)
+            content = None
+
+    write_to_file(content, CLOUD_HERO_HISTORY, is_json=True)

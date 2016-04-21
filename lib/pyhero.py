@@ -24,7 +24,8 @@ ENDPOINTS = {
     'environments': '/environments',
     'applications': '/applications',
     'swarm': '/swarm',
-    'feedback': '/feedback'
+    'feedback': '/feedback',
+    'history': '/history'
 }
 
 
@@ -171,6 +172,14 @@ class Client(object):
     def send_feedback(self, data):
         return self._result(self.post_json(ENDPOINTS['feedback'],
                                            data=data))
+
+    def send_history(self, data):
+        try:
+            return self._result(self.post_json(ENDPOINTS['history'],
+                                               data=data))
+        except:
+            # Silently continue if /history endpoint is not available.
+            pass
 
     @cache_to_file(CLOUD_HERO_CACHE_OPTIONS, ttl=CLIENT_CACHE_OPTIONS_TTL)
     def show_options(self, endpoint):

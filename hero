@@ -15,7 +15,7 @@ from lib.interactive import interactive_shell
 from lib.pyhero import Client
 from lib.prompter import *
 from lib.utils import (write_to_file, set_keys_to_empty_values,
-                       get_docker_ip_for_environment)
+                       get_docker_ip_for_environment, update_history)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -619,4 +619,5 @@ def register(**kwargs):
 
 
 if __name__ == '__main__':
+    update_history(cloud_hero)
     hero_cli()
