@@ -1,5 +1,5 @@
 VERBOSE = False
-CLI_VERSION = '0.3.1'
+CLI_VERSION = '0.3.2'
 
 # API-related constants.
 # https://docs.cloudhero.io
