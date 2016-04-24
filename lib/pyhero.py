@@ -8,7 +8,7 @@ from utils import remove_none_dict_values, cache_to_file, invalidate_cache
 
 DEFAULT_CLIENT_VERSION = '1.0'
 DEFAULT_TIMEOUT_SECONDS = 60
-CLIENT_CACHE_TTL = 60
+CLIENT_CACHE_TTL = 30
 CLIENT_CACHE_OPTIONS_TTL = 60 * 60
 
 
