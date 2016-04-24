@@ -120,17 +120,10 @@ def get_docker_ip_for_environment(node_details, environment_id):
 
 
 def update_history(cloud_hero):
+    """
+    Send each command to the /history endpoint.
+    """
     user_command = ' '.join(sys.argv)
     timestamp = int(time.time())
-    content = read_from_file(CLOUD_HERO_HISTORY, is_json=True)
-
-    command_history = (user_command, timestamp)
-    if not content:
-        content = [command_history]
-    else:
-        content.append(command_history)
-        if len(content) > 10:
-            cloud_hero.send_history(content)
-            content = None
-
-    write_to_file(content, CLOUD_HERO_HISTORY, is_json=True)
+    command = (user_command, timestamp)
+    cloud_hero.send_history([command])
