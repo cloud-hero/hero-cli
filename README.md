@@ -14,6 +14,17 @@ CloudHero CLI is a open-source application written in python and it is build on 
 pip install hero
 ```
 
+## Docker image
+
+You can also install the CLI via Docker:
+```
+docker build --rm -t cloudhero/hero-cli .
+```
+
+To have the `hero-cli` running seamlessly, you can use an alias for it:
+```
+alias hero-cli="docker run -it --rm -v ~/.herorc:/root/.herorc cloudhero/hero-cli"
+```
 
 ## Account Registration
 Once installed you need to create a account. If you already have an active CloudHero account you can skip this step.
