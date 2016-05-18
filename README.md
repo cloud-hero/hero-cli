@@ -16,13 +16,8 @@ pip install hero
 
 ## Docker image
 
-You can also install the CLI via Docker:
 ```
-docker build --rm -t cloudhero/hero-cli .
-```
-
-To have the `hero` running seamlessly, you can use an alias for it:
-```
+docker pull cloudhero/hero-cli
 alias hero="docker run -it --rm -v ~/.herorc:/root/.herorc cloudhero/hero-cli"
 ```
 
